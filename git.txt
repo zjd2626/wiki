@@ -119,6 +119,9 @@ git commit -am "reset to last version"
 git push origin master
 
 
+.gitignore
+
+
 
 常见问题：
 fatal：refusing to merge unrelated histories 说是拒绝合并不相关的历史，确实本地是新加的内容还重未和线上连接过。
