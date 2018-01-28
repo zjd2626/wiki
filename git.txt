@@ -124,6 +124,8 @@ git reset:
 
 3、git reset  --hard：彻底回退到某个版本，本地的源码也会变为某个版本的内容，此命令慎用
 
+4、git reflog:可以查看到操作记录
+
 单个文件版本回退：
 git reset commit_id filename
 git checkout  filename
