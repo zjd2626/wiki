@@ -34,6 +34,10 @@ git add .   #把工作区的所有变化提交到暂存区
 git add -u  #仅监控已经add的文件（即tracked文件），但不会提交新文件（untracked）
 git rm test.txt #删除test.txt
 git rm --cached test.txt  #仅从缓存区中删除test.txt，本地仍保留
+git rm --cached -r <directory_path> #停止追踪某个文件夹但是本地不删除'
+
+git commit -am #提交所有已添加到版本库的文件的修改
+git commit --amend  #追加当前修改到上一次提交中（删除上一次提交，重新生成一个提交，用于某些文件忘记提交的时候）
 
 git远程操作：
 
@@ -42,8 +46,10 @@ git remote -v ：查看远程仓库地址
 git remote show <主机名> ：查看该主机的详细信息
 git remote rm <主机名>：命令用于删除远程主机。
 git remote rename <原主机名> <新主机名>：命令用于远程主机的改名
+git remote set-url <主机名> <url>: 更新远程仓库地址
 
 git fetch <远程主机名>：将某个远程主机所有分支的更新，全部取回本地。
+git fetch -p :移除所有在远端已经被删除的远程分支
 git fetch <远程主机名> <分支名>：指定分支名，取回特定分支的更新
 git fetch origin dev：获取远程dev分支的更新
 git checkout -b dev origin/dev:checkout本地dev分支并和origin/dev进行关联
@@ -91,8 +97,13 @@ $ git push origin --tags
 git log：查看commit日志
 git log --oneline:每条记录只显示一行信息
  
+git diff：
+1、git diff #Changes in the working tree not yet staged for the next commit
+2、git diff --cached/git diff --staged  #查看已经暂存起来的文件(staged)和上次提交时的快照之间(HEAD)的差异，即显示的是下一次commit时会提交到HEAD的内容(不带-a情况下)
+3、git diff HEAD  #显示工作空间和HEAD的差别，即显示的是commit -a和HEAD的差别
+
 git diff commit_id1 commit_id2 ：比较2次提交的区别
-git diff master..dev :比较两个分支的区别
+git diff topic...master #Changes that occurred on the master branch since when the topic branch was started off it
 
 
 git tag tag_name：添加一个本地版本标识
@@ -121,8 +132,18 @@ git push origin master
 
 
 .gitignore
+全局忽略:
+git config --global core.excludesfile ~/.gitignore
 
 
+git stash/git stash save #保存当前追踪的文件修改状态而不提交，并使得工作空间恢复干净，常用于需要切换到其它分支进行工作
+git stash save -u #保存所有文件修改，包括未追踪的文件
+git stash list  #显示所有保存的Stashes
+
+git stash apply <stash@{n}> #应用任何的Stash而不从Stash列表中删除
+git stash pop  #应用并且删除Stash列表中的最后一个
+git stash clear #删除全部存储的Stashes
+git stash drop <stash@{n}>  #删除某个Stashes
 
 常见问题：
 fatal：refusing to merge unrelated histories 说是拒绝合并不相关的历史，确实本地是新加的内容还重未和线上连接过。
