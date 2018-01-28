@@ -1,0 +1,265 @@
+Action.c(40): Error -27796: Failed to connect to server "192.168.133.128:80": [10060] Connection timed out
+
+vi /etc/my.cnf
+
+在[mysqld]下面添加：
+max_connections=5000  说明修改最大并发连接为5000
+
+MariaDB [(none)]> set global max_connections=50;#设置数据库的最大连接数
+
+show global variables like '%conn%';
+
+
+修改上述限制的最简单的办法就是使用ulimit命令：
+[speng@as4 ~]$ ulimit -n
+上述命令中，在中指定要设置的单一进程允许打开的最大文件数。如果系统回显类似于“Operation notpermitted”之类的话，说明上述限制修改失败，实际上是因为在中指定的数值超过了Linux系统对该用户打开文件数的软限制或硬限制。因此，就需要修改Linux系统对用户的关于打开文件数的软限制和硬限制。
+第一步，修改/etc/security/limits.conf文件，在文件中添加如下行：
+speng soft nofile 10240
+speng hard nofile 10240
+其中speng指定了要修改哪个用户的打开文件数限制，可用’*'号表示修改所有用户的限制；soft或hard指定要修改软限制还是硬限制；10240则指定了想要修改的新的限制值，即最大打开文件数(请注意软限制值要小于或等于硬限制)。修改完后保存文件。
+第二步，修改/etc/pam.d/login文件，在文件中添加如下行：
+session required /lib/security/pam_limits.so
+这是告诉Linux在用户完成系统登录后，应该调用pam_limits.so模块来设置系统对该用户可使用的各种资源数量的最大限制(包括用户可打开的最大文件数限制)，而pam_limits.so模块就会从/etc/security/limits.conf文件中读取配置来设置这些限制值。修改完后保存此文件。
+第三步，查看Linux系统级的最大打开文件数限制，使用如下命令：
+[speng@as4 ~]$ cat /proc/sys/fs/file-max
+12158
+这表明这台Linux系统最多允许同时打开(即包含所有用户打开文件数总和)12158个文件，是Linux系统级硬限制，所有用户级的打开文件数限制都不应超过这个数值。通常这个系统级硬限制是Linux系统在启动时根据系统硬件资源状况计算出来的最佳的最大同时打开文件数限制，如果没有特殊需要，不应该修改此限制，除非想为用户级打开文件数限制设置超过此限制的值。修改此硬限制的方法是修改/etc/rc.local脚本，在脚本中添加如下行：
+echo 22158 > /proc/sys/fs/file-max
+
+
+5. 修改TCP等相关选项
+
+主要看这几项：
+
+    net.ipv4.tcp_rmem 用来配置读缓冲的大小，三个值，第一个是这个读缓冲的最小值，第三个是最大值，中间的是默认值。我们可以在程序中修改读缓冲的大小，但是不能超过最小与最大。为了使每个socket所使用的内存数最小，我这里设置默认值为4096。
+
+    net.ipv4.tcp_wmem 用来配置写缓冲的大小。读缓冲与写缓冲在大小，直接影响到socket在内核中内存的占用。
+
+    net.ipv4.tcp_mem 则是配置tcp的内存大小，其单位是页，而不是字节。当超过第二个值时，TCP进入 pressure模式，此时TCP尝试稳定其内存的使用，当小于第一个值时，就退出pressure模式。当内存占用超过第三个值时，TCP就拒绝分配 socket了，查看dmesg，会打出很多的日志“TCP: too many of orphaned sockets”。
+
+    net.ipv4.tcp_max_orphans 这个值也要设置一下，这个值表示系统所能处理不属于任何进程的 socket数量，当我们需要快速建立大量连接时，就需要关注下这个值了。当不属于任何进程的socket的数量大于这个值时，dmesg就会看 到”too many of orphaned sockets”。
+
+
+ 成功的解决方法：
+ 
+在负载生成器的注册表HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Services/Tcpip/Parameters里，有如下两个键值：
+TcpTimedWaitDelay
+MaxUserPort
+1,这里的TcpTimedWaitDelay默认值应该中是30s，所以这里，把这个值调小为5s（按需要调整）。
+2,也可以把MaxUserPort调大（如果这个值不是最大值的话）。
+ 
+反复验证，问题解决。【我怎么试了好几种方法都失败啊。】
+
+----------------------------------------------------connection time out---------------
+Error -27796: Failed to connect to server "ip地址": [10060] Connection timed out的解决办法：
+
+解决办法一是：
+
+（1）1. 修改run time setting中的请求超时时间Preferences 中点击Options 其中有三项的参数可以一次都修改了，HTTP-request connect timeout，HTTP-request receieve timeout，Step download timeout，分别建议修改为1000、1000、10000；run time setting设置完了后记住还需要在control组件的option的run time setting中设置相应的参数；
+
+     2. Browser Emulation 中的Download non-HTML resources 选项去掉，点击OK即可 
+
+（2）办法（一）不能解决的情况下，解决办法如下：
+
+　　设置runt time setting中的internet protocol-preferences中的advaced区域有一个winlnet replay instead of sockets选项，选项后再回放就成功了。切记此法只对windows系统起作用，此法来自zee的资料。
+
+
+
+echo "1800">/proc/sys/net/ipv4/tcp_keepalive_time
+cat /proc/net/sockstat
+
+
+压测机设置：
+HKLM\System\CurrentControlSet\Services\Tcpip\Parameters
+TcpTimedWaitDelay  5s
+
+ss -s
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+
+netstat -s |grep timestamp
+ 如发现系统存在大量TIME_WAIT状态的连接，通过调整内核参数解决，
+vim /etc/sysctl.conf
+编辑文件，加入以下内容：
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_timestamps = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 30   #表示如果套接字由本端要求关闭，这个参数决定了它保持在FIN-WAIT-2状态的时间
+net.ipv4.tcp_keepalive_time=60  #1800？
+net.ipv4.tcp_keepalive_probes=3 
+net.ipv4.tcp_keepalive_intvl=10
+net.ipv4.tcp_max_syn_backlog = 8192   #SYN队列的长度，时常称之为未建立连接队列。加大该值，可以容纳更多的等待连接的网络连接数
+net.ipv4.tcp_max_tw_buckets = 5000   #系统同时处理TIME_WAIT sockets数目。如果一旦TIME_WAIT tcp连接数超过了这个数目，系统会强制清除并且显示警告消息（time wait bucket table overflow）。设立该限制，主要是防止那些简单的DoS攻击，加大该值有可能消耗更多的内存资源。如果TIME_WAIT socket过多，则有可能耗尽内存资源。
+net.ipv4.ip_local_port_range = 1024 65000 
+
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.tcp_rmem=4096 87380 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+net.core.netdev_max_backlog=3000
+net.ipv4.tcp_syn_retries=2 
+net.ipv4.tcp_synack_retries=2
+net.ipv4.tcp_orphan_retries = 1  #设置较小的数值，可以有效降低orphans的数量（net.ipv4.tcp_orphan_retries = 0并不是想像中的不重试）
+
+然后执行 /sbin/sysctl -p 让参数生效。
+
+net.ipv4.tcp_syncookies = 1 表示开启SYN cookies。当出现SYN等待队列溢出时，启用cookies来处理，可防范少量SYN攻击，默认为0，表示关闭；
+net.ipv4.tcp_tw_reuse = 1 表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；
+tcp_tw_reuse选项和tcp_timestamps选项也必须同时打开；
+
+net.ipv4.tcp_tw_recycle = 1 表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭。
+如果服务器身处NAT环境，安全起见，通常要禁止tcp_tw_recycle，至于TIME_WAIT连接过多的问题，可以通过激活tcp_tw_reuse来缓解。
+
+net.ipv4.tcp_fin_timeout 修改系統默认的 TIMEOUT 时间
+
+下面附上TIME_WAIT状态的意义：
+
+客户端与服务器端建立TCP/IP连接后关闭SOCKET后，服务器端连接的端口
+状态为TIME_WAIT
+
+是不是所有执行主动关闭的socket都会进入TIME_WAIT状态呢？
+有没有什么情况使主动关闭的socket直接进入CLOSED状态呢？
+
+主动关闭的一方在发送最后一个 ack 后
+就会进入 TIME_WAIT 状态 停留2MSL（max segment lifetime）时间
+这个是TCP/IP必不可少的，也就是“解决”不了的。
+
+也就是TCP/IP设计者本来是这么设计的
+主要有两个原因
+1。防止上一次连接中的包，迷路后重新出现，影响新连接
+（经过2MSL，上一次连接中所有的重复包都会消失）
+2。可靠的关闭TCP连接
+在主动关闭方发送的最后一个 ack(fin) ，有可能丢失，这时被动方会重新发
+fin, 如果这时主动方处于 CLOSED 状态 ，就会响应 rst 而不是 ack。所以
+主动方要处于 TIME_WAIT 状态，而不能是 CLOSED 。
+
+TIME_WAIT 并不会占用很大资源的，除非受到攻击。
+
+还有，如果一方 send 或 recv 超时，就会直接进入 CLOSED 状态
+
+
+net.ipv4.tcp_keepalive_time = 1200 
+#表示当keepalive起用的时候，TCP发送keepalive消息的频度。缺省是2小时，改为20分钟。
+net.ipv4.ip_local_port_range = 1024 65000 
+#表示用于向外连接的端口范围。缺省情况下很小：32768到61000，改为1024到65000。
+net.ipv4.tcp_max_syn_backlog = 8192 
+#表示SYN队列的长度，默认为1024，加大队列长度为8192，可以容纳更多等待连接的网络连接数。
+net.ipv4.tcp_max_tw_buckets = 5000 
+#表示系统同时保持TIME_WAIT套接字的最大数量，如果超过这个数字，TIME_WAIT套接字将立刻被清除并打印警告信息。
+默认为180000，改为5000。对于Apache、Nginx等服务器，上几行的参数可以很好地减少TIME_WAIT套接字数量，但是对于 Squid，效果却不大。此项参数可以控制TIME_WAIT套接字的最大数量，避免Squid服务器被大量的TIME_WAIT套接字拖死。
+
+
+net.ipv4.tcp_mem
+
+内核分配给TCP连接的内存，单位是Page，1 Page = 4096 Bytes，可用命令查看：
+
+  #getconf PAGESIZE
+
+  4096
+
+  net.ipv4.tcp_mem = 196608       262144  393216
+
+  第一个数字表示，当 tcp 使用的 page 少于 196608 时，kernel 不对其进行任何的干预
+
+  第二个数字表示，当 tcp 使用了超过 262144 的 pages 时，kernel 会进入 “memory pressure” 压力模式
+
+  第三个数字表示，当 tcp 使用的 pages 超过 393216 时（相当于1.6GB内存），就会报：Out of socket memory
+
+  以上数值适用于4GB内存机器，对于8GB内存机器，建议用以下参数：
+
+  net.ipv4.tcp_mem = 524288     699050  1048576  （TCP连接最多约使用4GB内存）
+  
+  
+  
+  net.ipv4.tcp_rmem 和 net.ipv4.tcp_wmem
+
+为每个TCP连接分配的读、写缓冲区内存大小，单位是Byte
+
+  net.ipv4.tcp_rmem = 4096        8192    4194304
+
+  net.ipv4.tcp_wmem = 4096        8192    4194304
+
+  第一个数字表示，为TCP连接分配的最小内存
+
+  第二个数字表示，为TCP连接分配的缺省内存
+
+  第三个数字表示，为TCP连接分配的最大内存
+
+  一般按照缺省值分配，上面的例子就是读写均为8KB，共16KB
+
+  1.6GB TCP内存能容纳的连接数，约为  1600MB/16KB = 100K = 10万
+
+  4.0GB TCP内存能容纳的连接数，约为  4000MB/16KB = 250K = 25万
+
+net.ipv4.tcp_max_orphans
+
+最大孤儿套接字(orphan sockets)数，单位是个
+
+net.ipv4.tcp_max_orphans = 65536
+
+表示最多65536个
+
+注意：当cat /proc/net/sockstat看到的orphans数量达到net.ipv4.tcp_max_orphans的约一半时，就会报：Out of socket memory
+
+
+
+  
+- net.ipv4.tcp_keepalive_time   - 在第一次keep alive请求发送后，不活动连接的时间                               
+- net.ipv4.tcp_keepalive_probes - 在这个连接被认为是断开之前，keep alive请求被重发的次数
+- net.ipv4.tcp_keepalive_intvl  - keep alive探测的时间间隔
+
+可以使用下面的命令操作这些变量:
+$ sysctl -w net.ipv4.tcp_keepalive_time=60 net.ipv4.tcp_keepalive_probes=3 net.ipv4.tcp_keepalive_intvl=10
+
+这个命令将TCP keepalive的超时设为60秒，并有三次重发，每次间隔10秒。
+因此，你的应用程序90秒(60  + 10 + 10 + 10)后检测到TCP断开
+
+
+检查点问题：
+方法一：你可以试下注释掉所有的web_add_cookie函数，有可能cookie失效了，没有进入到你想进的页面
+方法二：看你用哪种模式录制的脚本，如果是URL，请用web_reg_find函数，因为web_find函数录只能对基于HTTP模式录制的脚本中进行查找，web_reg_find函数没有限制
+还是不行，也有可能是两个原因，两者一起试
+另外：方法二中说的web_reg_find函数是注册型函数，放在要校验的请求之前
+
+
+centos 7 监控：
+yum install rusers-server rsh-server xinetd
+systemctl enable rstatd
+rpc.rstatd start     service rstatd start
+rpcinfo -p应该可以看到rstatd
+
+
+windows资源监控：
+开启RPC和Remote Registry  Service服务，关闭uac
+
+web_find、web_reg_find函数区别
+web_find放在页面显示完成之后，而且要在运行时开启检查点
+web_reg_find放在请求前，是个注册函数，效率高
+
+
+windows压测机：
+D:\>netsh interface ipv4 show dynamicportrange protocol=tcp
+D:\>netsh interface ipv4 show tcpstats
+可以修改一下起始端口:
+
+netsh int ipv4 set dynamicport tcp start=1025 num=64510
+
+
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_timestamps = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_keepalive_time=1200
+net.ipv4.tcp_keepalive_probes=3
+net.ipv4.tcp_keepalive_intvl=10
+net.ipv4.tcp_max_syn_backlog = 8192
+net.ipv4.tcp_max_tw_buckets = 5000
+net.ipv4.ip_local_port_range = 1025 65535
+
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.tcp_rmem=4096 87380 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+net.core.netdev_max_backlog=3000
+net.ipv4.tcp_syn_retries=2
+net.ipv4.tcp_synack_retries=2
+net.ipv4.tcp_orphan_retries=1

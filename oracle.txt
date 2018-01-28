@@ -1,0 +1,145 @@
+1、法一：sqlplus /nolog
+      conn 用户名/密码@数据库名  as 连接身份，如conn sys/123456@orcl as sysdba
+      法二：sqlplus  sys/123@orcl as sysdba
+      startup open
+      shutdown immediate
+      
+      法三：SQLPLUS sys/123 AS SYSDBA@ORCL;
+      oracle数据库的启动要经历3个阶段：启动实例、装载数据库、打开数据库
+      
+      dbca命令：数据库配置助手
+      netca命令：网络配置助手
+      tnsping orcl
+      lsnrctl：监听器控件，status，start
+      
+      
+     set autocommit on|off|immediate：当设置为on或immediate时，当SQL命令执行完毕后，立即提交用户的更改。当设置为off时，则用户必须使用commit命令提交。
+     define_editor="notepad"，设置缓冲区的编辑器
+     clear screen清除屏幕
+     
+     column description heading 简介 format a15   格式化列descripton显示为简介，15字宽
+     colunm description clear 清除指定列格式
+     clear column 清除列格式
+     
+     
+centos 6.5安装oracle 12c
+
+     groupadd dba
+     useradd -g dba -m oracle
+     passwd oracle
+     mkdir -p /opt/oracle
+     chown -R oracle:oinstall /opt/oracle
+     chmod -R 755 /opt/oracle
+
+vi /etc/sysconfig/network
+hostname oracle
+
+
+vi /etc/hosts
+192.168.159.134  oracle
+ 
+
+vi /etc/security/limits.conf:
+oracle           soft    nofile          65536
+oracle           hard    nofile          65536
+oracle           soft    nproc           16384
+oracle           hard    nproc           16384
+oracle           stack   nproc           16384
+
+vi /etc/sysctl.conf
+fs.file-max = 6815744
+fs.aio-max-nr = 1048576
+kernel.shmall = 2097152
+kernel.shmmax = 4135593984
+kernel.shmmni = 4096
+kernel.sem = 250 32000 100 128
+net.ipv4.ip_local_port_range = 9000 65535
+net.core.rmem_default = 262144
+net.core.rmem_max = 4194304
+net.core.wmem_default = 262144
+net.core.wmem_max = 1048576
+
+
+
+vi ~/.profile
+TMP=/tmp
+TMPDIR=/tmp
+export TMP TMPDIR
+
+/dev/shm空间不足，vi /etc/fstab
+tmpfs                   /dev/shm                tmpfs   defaults,size=5G   0 0
+
+
+vi /etc/bashrc
+export ORACLE_HOME=/home/oracle/app/oracle/product/12.1.0/dbhome_1
+export ORACLE_SID=orcl
+export PATH=$ORACLE_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+
+
+oracle实例开机自动启动
+vi /etc/oratab
+ydpower:/app/oracle/product/12.1.0/dbhome_1:Y
+
+vi /etc/rc.d/rc.local
+swapon /tmp/swapfile
+su oracle -lc "lsnrctl start"
+su oracle -lc "dbstart $ORACLE_HOME"
+
+2、Oracle在SQL*Plus中的命令以分号（；）结尾，代表命令完毕并执行，系统同时会把该命令保存在缓存中，缓存中只保存最近执行过的命令，如果重新执行缓存中的命令，直接使用左斜杠符号（/）。
+
+3、创建用户：CREATE USER 用户名 IDENTIFIED BY 口令 [ACCOUNT LOCK|UNLOCK]，
+如create user david identified by  123456 account unlock；
+一般情况下，一个普通的用户（如SCOTT），拥有CONNECT和RESOURCE两个角色即可进行常规的数据库开发工作。
+
+4、可以把某个权限授予某个角色，也可以把权限、角色授予某个用户
+GRANT角色|权限 TO 用户（角色）；
+grant connect to david；
+grant resource to david；
+grant dba to david;
+
+5、
+//回收权限：revoke connect from david；
+//修改用户的密码：ALTER USER 用户名 IDENTIFIED BY 新密码
+//修改用户处于锁定（非锁定）状态：ALTER USER 用户名 ACCOUNT LOCK|UNLOCK
+
+6、通过LIST命令查看缓冲区中的SQL语句
+输入/或者RUN命令，可以重复执行缓冲区中的SQL语句
+
+执行指定文件中的sql命令
+start 01.sql
+@01.sql
+7、指定将查询结果输出到文件
+spool d:\test.txt
+spool off
+
+8、在sqlplus执行SQL语句时，如果想交互输入值，需要使用替代变量，替代变量以&开始
+select * from phone_info where price>&unitprice;
+
+9、数据库的关闭有四种方式：NORMAL、IMMEDIATE、TRANSACTIONAL、ABORT。
+数据库的关闭也要经历三个阶段：关闭数据库、卸载数据库、关闭实例。
+IMMEDIATE：使用频率最高、最安全、不需要实例恢复、关闭数据库的过程比较慢，未提交的事务将被回滚。
+ABORT：关闭数据库最快的方式、未提交的事务不被回滚、是最不安全的方式、数据库重启时需要实例恢复（oracle后台进行），只有数据库出现问题的时候才用这种方式
+NORMAL：不需要实例恢复、关闭最慢的方式、关闭时允许新的用户注册（登录）数据库，常常不能关闭数据库，不推荐使用
+TRANSACTIONAL：不会使客户端数据丢失、不需要实例恢复、所有的事务完成后才关闭数据库、关闭数据库的过程比较慢，
+
+10、
+select  table_name from user_tables;//查询当前用户的表
+select  table_name from all_tables;//查询所有用户的表
+select table_name from dba_tables;//包括系统表
+select table_name from dba_tables where owner='SCOTT';//
+        
+        
+11、
+create table book
+(
+id int primary key,
+name varchar2(20),
+description varchar2(100),
+publish_date date
+)
+/
+
+INSERT INTO book VALUES(5,'C Primer Plus ','C语言经典教程 ',date'2007-07-01');
+
+

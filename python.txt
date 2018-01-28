@@ -1,0 +1,241 @@
+#coding=utf-8
+1、python语言的优点
+面向对象、易学、可扩展、健壮性
+C 或者C++最大的弊病在于内存管理是由开发者负责的。所以哪怕是对于一个很少访问、修
+改和管理内存的应用程序，程序员也必须在执行了基本任务之外履行这些职责。这些加诸在开
+发者身上的没有必要的负担和责任常常会分散精力。
+在Python 中，由于内存管理是由Python 解释器负责的，所以开发人员就可以从内存事务
+中解放出来，全神贯注于最直接的目标，仅仅致力于开发计划中首要的应用程序。这会使错误
+更少、程序更健壮、开发周期更短
+
+Python 是一种解释型语言，类似于Java，Python实际上是字节编译的。纯粹的解释型语言通常比编译型语言运行的慢
+
+_在解释器中有特殊的含义，表示最近一次调用的表达式的值。
+
+
+国内使用官方的pypi源不稳定，经常出现timeout的情况，所以使用豆瓣的源代替
+
+方法
+
+新建配置文件
+
+windows 下：
+
+%APPDATA%\pip\pip.ini
+
+Linux 下：
+
+~/.pip/pip.conf
+
+内容
+
+[global]
+timeout = 60
+index-url = https://pypi.douban.com/simple
+
+如果使用http链接，则需要trusted-host参数
+
+[global]
+timeout = 60
+index-url = http://pypi.douban.com/simple
+trusted-host = pypi.douban.com
+
+现在可以顺畅使用pip了
+    
+2、多行注释可以用'''，或"""来实现。
+
+3、 Python 的print 语句，与字符串格式运算符( % )结合使用，可实现字符串替换功能
+%.2f     取后面2位小数点
+%02d   如位数不够，前面补0
+%r
+print "this script is copy %s to %s" %(from_file,to_file)#注意多个参数要用括号
+     print一条语句之后默认是换行的， 如果在print语句后加多一个,那么print 就不会输出新行
+     比如：print "How much do you weigh?",
+     
+
+4、//取整除法
+      **幂运算
+  Python变量名是大小写敏感的， 也就是说变量 "cAsE" 与 "CaSe" 是两个不同的变量
+      
+5、#coding=utf-8
+
+6、from sys import argv
+     from sys import exit 
+     from random import randint
+     from os.path import exists
+     scriptname,argv1,argv2,argv3 =argv
+     txt.open("filename","w")
+     txt.write("test.")
+     txt.truncate()#清空文件，小心
+     txt.seek(0)
+     txt.close()#用完后记得关闭文件
+     
+7、函数的定义
+def print_two(*args):
+    arg1,arg2=args
+    print ("arg1: %r,arg2:%r" %(arg1,arg2))
+    
+def print_two_again(arg1,arg2):
+    print ("arg1: %r,arg2:%r" %(arg1,arg2))
+    
+print_two("fuck","you")
+print_two_again("fuck","you")
+
+8、str="www.126.com"
+for i in str.split('.'):
+    print i
+    
+9、True   False 
+
+10、列表
+change = [1, 'pennies', 2, 'dimes', 3, 'quarters']
+change.append(4)
+change.append('test')
+change.append('test1')
+del change[8]#删除元素
+for i in change:
+  print "change is %s" %i 
+    
+elements = list(range(0,6))
+
+>>>foo='abc'
+>>>for i,ch in enumerate(foo):
+>>>  print i,ch
+>>>
+0 a
+1 b
+2 c 
+
+change = [1, 'pennies', 2, 'dimes', 3, 'quarters']
+列表元素删除：
+del change[2]  #删除列表中的第3个元素
+change.remove('pennies')  #删除列表中的'pennies'元素
+change.pop(2)  #删除列表中的第3个元素，并返回该值
+
+
+mylist1=[1, 2, 0, 'abc', 4, 'haha']
+mylist2=mylist1[:]
+hello=["hello ","world."]
+mylist1.append(hello)   #把hello作为一个整体追加到mylist1
+mylist2.extend(hello)   #把hello中的每一个元素扩展到mylist2
+print mylist1   #[1, 2, 0, 'abc', 4, 'haha', ['hello ', 'world.']]
+print mylist2   #[1, 2, 0, 'abc', 4, 'haha', 'hello ', 'world.']
+
+
+
+排序：
+print sorted(mylist2),mylist2   #mylist2不改变
+print mylist2.sort(),mylist2    #mylist2排序并永久改变为排序后的值
+
+
+
+11、元组#元组不可修改
+change = (1, 'pennies', 2, 'dimes', 3, 'quarters')
+for i in change:
+  print i
+  
+12、
+class Thing(object):
+  def test(arg1,arg2):
+    print "arg1 is %s,arg2 is %s" %(arg1,arg2)
+a=Thing()
+a.test("hi")
+
+E:\python>python test.py
+arg1 is <__main__.Thing object at 0x020C39F0>,arg2 is hi
+
+13、字典
+>>>stuff = {'name': 'Zed', 'age': 36, 'height': 6*12+2}
+>>>stuff[1]='wow'
+>>> print stuff
+{1: 'Wow', 'age': 36, 'name': 'Zed', 'height': 74}
+>>>del stuff[1]#删除元素
+
+>>>cities = {'CA': 'San Francisco', 'MI': 'Detroit', 'FL': 'Jacksonville'}
+>>> cities.keys()
+['FL', 'CA', 'MI']
+
+14、永远永远都使用 class Name(object) 的方式定义 class，否则你会碰到大麻烦
+
+15、下面是一个将输出重定向到日志文件的例子：
+logfile = open('e:\test.txt', 'a')
+print >> logfile, 'Fatal error: invalid input!'
+logfile.close()
+
+如何打开文件
+handle = open(file_name,  'r')
+file_name 变量包含我们希望打开的文件的字符串名字， access_mode 中 'r' 表示读取，
+'w' 表示写入， 'a' 表示添加，'b' 表示二进制。如果未提供 access_mode ， 默认值为 'r'。
+
+try:
+  filename = raw_input('Enter file name: ')
+  fobj = open(filename, 'r')
+  for eachLine in fobj:
+    print eachLine, 
+  fobj.close()
+except IOError, e:
+  print 'file open error:', e
+  
+16、
+#coding=utf-8
+print "menu:"
+print "1:goto menu1"
+print "2:goto menu2"
+print "3:goto menu3"
+print "4:exit"
+
+while True:
+  op=raw_input("please select a menu option:")
+  if bool(op.rstrip())==False:#输入为空
+    print "You must input a value."
+  elif op=="1":
+    print "menu1"
+  elif op=="2":
+    print "menu2"
+  elif op=="3":
+    print "menu3"
+  elif op=="4":
+    break
+  else:
+    print "unknown option"
+    
+17、
+如果模块是被导入， __name__ 的值为模块名字
+如果模块是被直接执行， __name__ 的值为 '__main__'
+if __name__="__main__":
+    test()
+
+18、行结束符， 对DOS 或win32 平台是 反斜杠r反斜杠n   对Unix 平台，是反斜杠n，通过使用 os.linesep，
+我们不必关心程序运行在什么平台，也不必要根据不同的平台决定使用哪种行结束符。
+
+
+19、from random import randint,choice
+from time import *
+sleep(1)
+t1=time()
+t2=asctime()
+t3=localtime()
+
+20、
+import pickle
+game_data={"player-position":"N23 E46","pocket":["keys","knife","stone"],"money":188.5}
+save_file=open("save.dat","wb")
+pickle.dump(game_data,save_file)
+save_file.close()
+load_file=open("save.dat","rb")
+load_game_data=pickle.load(load_file)
+load_file.close()
+print load_game_data
+
+
+21:三元表达式
+a=y if x else z  #如果x为真，则a=y，否则a=z
+
+在Python中可以用bool函数把对象转换为0或1，然后从列表中挑选值
+例如：
+x=0
+A=['bob','john'][bool(x)]
+则，A='bob'
+
+求100内的质数
+print [ p for p in  range(2, 101) if 0 not in [ p% d for d in range(2, int(math.sqrt(p))+1)] ]

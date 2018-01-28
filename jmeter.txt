@@ -1,0 +1,43 @@
+有些网站保存信息是使用Cookie，有些则是使用Session.对于这两种方式，JMeter都给予一定的支持。
+1.Cookie
+添加方式：线程组－配置元件－HTTP Cookie 管理器
+2.Session
+添加方式：线程组－前置处理器 －HTTP URL 重写修饰符
+有些tomcat的session实现不是通过cookie的，而是通过session id的，就是说，用户登录有了session之后，tomcat就会维护一个sessonid，然后每次request的时候，要求每个http request的URL都要带上这个session id.
+在tomcat中，使用URL Re-writing mode,URL是这样的：http://192.168.0.2:8080/easy/login.ec;jsessionid=410C3D3946535635683D662DF74A00AC,所以，这里我们需要设置会话参数名称为： jsessionid,Jmeter就会到URL里面按照这个参数去把上面那个sessionid抓下来，然后每次request都带上这个东西，需要注意，“
+
+路径扩展（使用;作分隔符
+
+）”这里还要将勾上，因为如上，tomcat的URL Re-writing中sessionid是以分号的方式加在URL上的，所以需要勾上这个选项，有些web server这个session和普通的URL parameter一样，是以?和&这种方式加上去的，这种情况这个checkbox就不用勾了。
+
+
+
+
+http采样器中过滤请求
+URLs must match：比如只想要下载http://www.qq.com，则用表达式：http://.*\.qq\.com/.*
+
+
+http://wthrcdn.etouch.cn/WeatherApi?citykey=101280601
+http://wthrcdn.etouch.cn/weather_mini?city=广州
+
+
+jmeter关联：
+（1）引用名称：下一个请求要引用的参数名称，如填写activityID，则可用${activityID}引用它
+（2）正则表达式：
+　　　　()括起来的部分就是要提取的。
+　　　　.匹配任何字符串。
+　　　　+：一次或多次。
+　　　　?：不要太贪婪，在找到第一个匹配项后停止。
+（3）模板：用$$引用起来，如果在正则表达式中有多个正则表达式（多个括号括起来的东东），则可以是$2$$3$等等，表示解析到的第几个值给title。如：$1$表示解析到的第1个值
+（4）匹配数字：0代表随机取值，1代表全部取值，通常情况下填0
+
+2、提取多个字符串：
+假设测试人员期望匹配Web页面的如下部分：name = "file" value = "readme.txt">并提取file和readme.txt。
+一个符合要求的正则表达式：name = "(.+?)" value = "(.+?)"。
+引用名称：MYREF
+模板：$1$$2$
+如下变量的值将会被设定：
+MYREF_g0:name = "file"value = "readme.txt"
+MYREF_g1:file
+MYREF_g2:readme.txt
+引用${MYREF_g1}

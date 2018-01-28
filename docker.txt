@@ -1,0 +1,16 @@
+docker version / docker info :查看基本信息，遇到使用问题或者BUG，可以到社区里报告，记得带着这些信息哈。
+
+docker pull hub.cloudak47.com:5000/jenkins :拉取镜像。
+
+docker run 从镜像创建一个容器并运行指定的命令常用参数-i -d，建议用—-name命名这个容器，命名后可以使用容器名访问这个容器。
+例如：docker run --name myweb -d -p 8081:8080  ubuntu:web 
+
+docker exec -it Container /bin/bash 连接到容器上运行bash
+例如：docker exec -it myweb /bin/bash 
+
+docker logs CONTAINER 查看日志，如run命令后的运行结果，Docker logs -f 查看实时的日志。
+
+docker kill 杀死Docker容器进程，你可以使用docker kill $(docker ps -aq)杀死所有的Docker进程，
+后者打印出所有的容器的容器id（包括正在运行的，和没有运行的）。
+
+docker rm CONTAINER 删除一个容器，记得要先停止正在运行的容器，再去删除它。

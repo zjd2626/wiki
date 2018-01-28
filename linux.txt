@@ -1,0 +1,378 @@
+1、ssh登录
+ssh 用户名@host进行登录，如果想不用密码就能登录，在客户机输入ssh-keygen命令产生密钥，再用ssh-copy-id -i 用户名@host将公钥传送到主机上。
+
+ssh远程登录太慢，修改服务器/etc/ssh/sshd_config:    useDNS no
+
+2、scp from to
+scp -r doc  root@192.168.159.130:/home/zjd
+scp -r root@192.168.159.130:/home/zjd/doc  .
+
+3、X :3 -query 192.168.0.190
+根据ps -ef |grep X，查询出tty？，ctrl+alt+Fn切换
+kill -9 pid
+
+4、lsb_release -a：获取有关操作系统的信息
+
+5、grep MemTotal /proc/meminfo
+      grep SwapTotal /proc/meminfo
+      
+6、vim
+i：在当前光标之前插入
+I：在当前行首插入
+a：在当前光标之后插入
+A：在当前行尾插入
+o：在当前行下面插入一行
+O：在当前行上面插入一行
+J：把下一行的内容移上来
+dd：删除一行，
+ndd：在当前光标位置删除n行
+x：从当前光标位置处删除一个字符，nx从当前光标处删除n个字符
+X：删除当前光标的前一个字符，nX删除当前光标前的n个字符
+D：删除从当前光标到行尾的内容
+
+G：移动到最后一行，nG移动到第n行
+^/0（零)：把光标移动到当前行行首
+$：把光标移动到当前行行尾
+-：把光标移动到上一行的起始位置
+Enter：把光标移动到下一行的起始位置
+退格：光标左移一个位置
+空格：光标右移一个位置
+、：在上一次光标所在位置和当前光标位置间切换
+
+% s/^/#/g 来在全部内容的行首添加 # 号注释
+:1,10 s/^/#/g 在1~10 行首添加 # 号注释
+
+
+Ctrl+F：向上翻一页
+Ctrl+B：向下翻一页
+Ctrl+U：向上翻半页
+Ctrl+D：向下翻半页
+Ctrl+E：向上翻一行
+Ctrl+Y：向下翻一行
+Ctrl+G：显示文件名和行号
+
+Esc：可以在命令模式和输入模式之间切换
+ZZ：保存退出
+
+C：替换从当前光标位置开始直到当前行尾的内容
+ncc：替换当前行开始n行内容
+S：替换当前行内容
+
+r：替换单个字符，替换完成后自动返回命令模式
+R：替换多个字符，进入替换模式
+
+u：撤销上一次的操作，U可以恢复光标所在行的所有改动。
+.：重做上一次的操作
+
+
+nyy：复制n行文本内容，再输入p将粘贴板中的内容复制到光标所在行的下面，输入P复制到光标所在行的上面
+:1,5 co 12   将1-5行内容复制到第12行之后。（还可以用.表示当前行，用$表示最后一行)
+:1,5 m 12    将1-5行内容移动到第12行之后。（还可以用.表示当前行，用$表示最后一行)
+:1,5 d          将1-5行内容删除
+:5 r test.txt  在第五行插入test.txt的内容
+:/str   从当前位置搜索给定的字符串，再输入n搜索下一个匹配的字符串，输入N搜索上一个匹配的字符串
+:?str   从当前位置，反方向搜索给定的字符串
+查找特殊字符需要用\转义
+:/\<str\>  完全匹配str这个单词而不是包含str的字符串
+:set ic 忽略大小写的差异  :set noic区分大小写(ic为ignorecase的简称）
+
+:1,$ s/^M//（删除windows中的回车字符，^M不能直接输入，需要按Ctrl+V，再按Ctrl+M）
+:g/USA/s//U.S.A/gc 替换USA为U.S.A，第一个g表示全文搜索，第二个g表示全部替换，c表示用户确认
+
+
+vimrc：set nu；set hlsearch
+vimrc.tiny： set backspace=2;set nocompatible
+
+vi中以十六进制查看文件:
+:%!xxd
+
+恢复：
+:%!xxd -r
+
+7、shell通配符：*、？、[]
+？匹配一个字符、[]匹配所有出现在方括号里面的字符
+
+8、cd -：回到上一次的目录
+      ls -F   对于目录来说（权限r可以列出目录中的文件、w可以在目录中创建删除文件、x可以搜索进入该目录）
+      less -M test.txt
+      find / -name "te*.txt" -type f  -atime -mtime
+      uname -r：查看内核信息
+      lsb_release -a：查看系统发行信息
+      
+      mv -b test.txt test/      -b有同名文件时先备份
+      
+9、ln -s from to 建立符合链接，可以用于目录
+
+10、chmod
+在owner triplet设置权限位为s，称为suid，则当用户执行该文件时，系统用owner的uid代替实际执行文件用户的uid，文件会认为是owner在执行它。
+在group triplet设置权限位为s，称为guid，则当用户执行该文件时，系统用文件所属组的gid代替实际执行文件用户所属组的gid。
+如果owner和group未设置执行x权限，则对owner和group设置s权限是没有意义的。
+
+在other triplet 设置权限位为t，代表粘性位，这就意味着该目录中的文件只有其属主才可以删除，即使某个同组用户具有和属主同等的权限。如果在权限位看到t，那么这就意味着该脚本或程序在执行时会被放在交换区(虚拟内存)
+
+目录的读权限位意味着可以列出其中的内容。写权限位意味着可以在该目录中创建文件，如果不希望其他用户在你的目录中创建文件，可以取消相应的写权限位。执行权限位则意味着搜索和访问该目录
+
+ls -l |grep "^d"  打印出当前目录下的文件夹名称
+ls -l /bin |grep ^...s
+
+chmod 4755 myfile =rwsr-xr-x
+chmod 6755 myfile =rwsr-sr-x
+chmod 7755 myfile =rwsr-sr-t
+
+设置umask命令：umask 022，则目录默认权限为（777-022），文件默认权限（666-022）
+
+10、find命令
+查找系统中所有大于500M的文件，并把这些文件写入一个文本文件中，并统计其个数：
+find / -size +500M |tee log.txt|wc -l
+查找/var/logs目录中更改时间在7日内的普通文件，并在删除之前询问它们：
+find /var/logs -mtime -7 -type f -ok rm {} \;#注意{}和\;之间的空格（-exec不进行确认）
+find /var/logs -mtime -7 -type f |xargs rm -rf
+find  / -name *.log >result.txt 2>&1
+find / -name *.log >&result.txt
+
+-perm：根据文件权限查找
+-user：根据文件属主查找
+-group：根据文件所属的组查找
+-type：根据文件类型查找(b块设备，c字符设备，d目录，f普通文件，p管道文件，l符号链接文件）
+-depth：先匹配文件，再在子目录中查找
+
+atime(access time):文件被读取或者执行的时间
+ctime(change time):文件状态改变的时间，如权限
+mtime(modify time):文件内容被修改的时间
+用stat命令可以查看这三个时间
+
++n表示n~(n+1)天外
+-n表示(n-1)~n天内
+n表示n~(n+1)天之间
+
+-mtime 3 ，意思是说今天之前的 3*24 ~ 4*24 小时之间
+
+find . -name "*.sh" -perm 755 -type f -exec ls -l {} \;
+
+11、
+压缩文件
+tar cvf shell.tar shell/   打包shell文件夹为shell.tar
+tar zcvf  shell.tar.gz  shell/ 打包并调用gzip压缩shell文件夹
+tar jcvf   shell.tar.bz2 shell/  打包并调用bzip2压缩shell文件
+夹
+
+解压缩：
+tar  xvf shell.tar
+tar zxvf  shell.tar.gz  -C shell  #解压到shell目录
+tar jxvf   shell.tar.bz2  -C shell#解压到shell目录
+
+12、mkfs -t ext4  /dev/sdb1
+        mkswap /dev/sdb2  初始化交换分区
+        swapon  /dev/sdb2  激活交换分区
+        fsck /dev/sdb检查文件系统
+        
+13、nc -w2 localhost 21 监听本地主机21端口2秒钟   echo $?
+
+14、basename /bin/show.exe   #返回show.exe
+        dirname /bin/show.exe      #返回/bin
+
+15、cat /proc/cpuinfo |grep flags
+有pae就支持半虚拟化。硬件虚拟化为vmx（intel）、svm（amd）
+
+egrep "vmx |svm" /proc/cpuinfo
+        
+16、Ctrl+a光标移动到命令行开头处
+        Ctrl+e光标移动到命令行末尾
+        Ctrl+u删除当前光标到行首处的字符
+        Ctrl+k删除当前光标到行尾处的字符
+        Ctrl+l清除屏幕显示
+        
+17、安装rpm包：rpm -ivh  *.rpm
+ 解压rpm包：rpm2cpio kchmviewer-3.1-1.el5.5.x86_64.rpm | cpio -div
+ （d表示根据包中文件原来的路径建立目录，参数i表示提取文件，v表示指示执行进程。)
+ rpm -qa 列出所有安装过的包
+ 如果要查找所有安装过的包含某个字符串sql的软件包rpm -qa |grep sql 
+ rpm -ql 包名（查看包安装到哪里去了）
+ 
+ 18、dpkg -i iptux.deb#安装iptux.deb软件包
+        dpkg -r iptux#卸载iptux软件包
+       解压deb包： ar -x iptux.deb，然后tar xvf data.tar
+       
+19、查看显卡信息
+       lspci |grep -i "vga"
+       hwinfo --framebuffer
+       dmidecode |grep -i "vga"
+       如果是nvidia，glxinfo |grep -i rend
+       
+20、查看系统是多少位的
+file /bin/ls
+lsb_release -a
+uname -a
+
+21、strings /lib64/libc.so.6 |grep GLIBC
+
+22、date -s #设置时间，如date -s "2017-10-10 10:10:10"
+date +%s  #获取时间戳
+date +%x%X -d @1509772175  #时间戳转换为日期
+
+有时间可以考虑以下如下需求如何用脚本实现：
+
+         假设192.168.4.1为ntpserver ，
+
+         192.168.4.2需要与192.168.4.1时间同步，不准用ntpdate or sntp之类的工具（之前同事说有问题）
+
+         时间要求用脚本同步后，时间误差在毫秒级
+
+        检验标准为在192.168.4.1上运行
+        
+        答案：ssh 192.168.4.2  date -s @`date +%s.%N`
+        
+        设置前：192.168.159.134正确的时间；192.168.159.130错误的时间：
+        linux-ysq4:~ # date +%s.%N;ssh 192.168.159.134  "date +%s.%N"
+1450618224.780223350（192.168.159.130错误）
+1452088724.982731355（192.168.159.134正确）
+
+在192.168.159.130上运行：
+linux-ysq4:~ # date -s @`ssh 192.168.159.134 date +%s.%N`
+Wed Jan  6 22:02:33 CST 2016
+
+再查看linux-ysq4:~ # date +%s.%N;ssh 192.168.159.134  "date +%s.%N"
+1452089064.636449963
+1452089065.153912285
+发现时间已同步
+
+23、nohup svn up & #放到后台处理
+        jobs -l
+        
+24、有如下文件夹，meta2223444_V3  meta-233980_V3  meta234567880_V3  meta-2455_V3
+重命名并去掉meta、_V3
+法一：for i in `ls`;do mv $i `echo ./$i |sed 's/meta/''/;s/_V3/''/'`; done;
+法二：ls |grep meta |xargs -I file  sh -c 'a=file;b=${a##meta};mv file  ./${b%%_V3}'  #必须是'
+
+
+25、lsof命令
+lsof：列出所有打开的文件
+lsof /usr/bin/mysqld_safe：查看这个文件的使用情况
+lsof -c mysqld_safe：查看这个命令的使用情况
+lsof -u root：查看这个用户打开的文件
+lsof -i:3306：列出3306端口的使用情况
+lsof -p 2508：列出进程2508的使用情况
+lsof -i：列出所有的网络连接
+
+
+26、libbz2so=`ldconfig -p | awk -F" " '$1=="libbz2.so.1" && $2~/'${LDCONFIG_ARCH}'/ {print $NF}'`
+
+27、vi /etc/fstab
+/dev/sda1 /mnt/windows ntfs-3g defaults 0 0
+
+28、lvm
+pvcreate  /dev/md127  #准备分区为PV
+vgcreate  iscsi   /dev/md127 #创建卷组
+lvcreate -L 1000G -n lun1  iscsi   #建立LV
+
+pvscan
+vgscan
+lvscan
+
+pvdisplay
+vgdisplay
+lvdisplay
+
+pvs
+vgs
+lvs
+
+vgchange -an VG_XenStorage-86ad9d9e-ab9f-47a8-f0e8-6893847f56df
+
+29、parted分区
+parted /dev/md0
+mklabel gpt
+mkpart primary 4096s 100% （primary指分区类型为主分区，4096s是表示分区从4096扇区开始，100%是分区结束位置。命令：mkpart primary 0  -1表示从0开始，到分区结束）
+
+
+30、lvs、keepalived
+yum  install -y gcc openssl openssl-devel
+yum install -y ipvsadm keepalived
+
+解决ARP问题
+
+[root@web01 ~]# vim /etc/sysctl.conf
+
+打开编辑器，输入以下内容
+
+net.ipv4.conf.lo.arp_ignore = 1
+net.ipv4.conf.lo.arp_announce = 2
+net.ipv4.conf.all.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+
+设置说明
+
+#arp_ignore=1，系统只回答目的IP为是本地IP的包。也就是对广播包不做响应。
+#arp_announce=2，系统忽略IP包的源地址（source address），而根据目标主机（target host），选择本地地址。
+
+#arp_ignore 限制arp应答。限制等级：
+
+#0：对于其它设备 的arp请求，应答所有其它接口的上IP的arp应答
+
+#1：对于其它设备的arp请求，只应答本接口上IP的arp应答
+
+#arp_announce 限制arp通告。限制等级：
+
+#0：在接口上通告所有接口上IP的arp广播
+
+#1：对于其它设备的arp请求，在接口上尽量限制广播通告应答（不够严格）
+
+#2：只通告本接口上IP的arp广播
+
+
+
+windows:
+运行cmd 打开命令行提示符窗口
+
+运行以下命令修改网卡接口（即本地连接）、环回接口(即realserver) 连接模式，用于解决ARP问题（否则TCP的状态会一直处于SYN_RECV 状态）
+
+netsh interface ipv4 set interface "VMware Network Adapter VMnet8" weakhostreceive=enabled
+
+netsh interface ipv4 set interface "VMware Network Adapter VMnet8" weakhostsend=enabled
+
+netsh interface ipv4 set interface "realserver" weakhostreceive=enabled
+
+netsh interface ipv4 set interface "realserver" weakhostsend=enabled
+
+netsh interface ipv4 set interface "loopback" weakhostreceive=enabled
+
+netsh interface ipv4 set interface "loopback" weakhostsend=enabled
+
+
+31、CentOS7配置网卡名称为eth0
+1.修改grub,编辑/etc/default/grub并加入“net.ifnames=0”到GRUB_CMDLINE_LINUX变量
+2.grub2-mkconfig -o /boot/grub2/grub.cfg
+3.修改网卡配置文件
+4.vi /etc/udev/rules.d/70-persistent-net.rules
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="00:0c:29:28:ac:54", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"
+
+
+32、ulimit -n
+ulimit -a
+vi /etc/security/limits.conf
+*     soft     nofile        65535
+*     hard    nofile        65535
+*     soft      nproc     65535
+*     hard     nproc     65535
+
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+
+
+33、ps -eo pid,uname,comm,cmd,etime
+ps aux --sort=-pcpu,-pmem  #-降序排列
+
+
+34、netstat -an
+ss -s
+
+
+35、iptables
+iptables -t filter -A OUTPUT -p tcp -j LOG --log-prefix zjd
+iptables -t filter -D OUTPUT 1
+iptables -t filter -L
+
+
+36：重定向
+tee -a filename :-a 表示追加
+cat tttttt >filename 2>&1
+cat tttttt >/dev/null 2>&1

@@ -1,0 +1,498 @@
+1、mysql连接
+mysql -h 127.0.0.1 -uroot -p159357 -P3306
+
+tee d:\20150924.sql(把操作记录到d:\20150924.sql中）
+
+set names gbk;
+
+mysql> select user();
++----------------+
+| user()         |
++----------------+
+| root@localhost |
++----------------+
+1 row in set (0.00 sec)
+
+mysql> select database();
++------------+
+| database() |
++------------+
+| test       |
++------------+
+1 row in set (0.00 sec)
+
+允许192.168.159.1访问，其中*.*，第一个星指定库，第二个*指定表
+grant all privileges on *.* to root@'192.168.159.1' identified by '159357' with grant option;
+flush privileges
+
+允许任何主机访问：
+grant all privileges on *.* to root@'%' identified by '159357' with grant option;
+flush privileges
+
+mysql>set password =password('你的密码');
+mysql>flush privileges;
+
+远程连接慢，修改/etc/my.cnf
+在[mysqld]下添加：
+skip-name-resolve
+重启mysql服务即可。
+
+
+drop user test@‘%’
+
+
+mysqld_safe --skip-grant-tables
+
+2、查看有哪些数据库：show databases like 'sh%';
+      创建一个数据库：create database if not exists shop charset utf8;
+      选择一个数据库：use daas;
+      查看该数据库中有哪些表：show tables from shop like 'go%';
+      查看表的数据结构：desc stu;
+      查看表中的数据：select * from stu;
+      清空一张表中的内容：truncate stu;
+      删除一张表：drop table if exists stu;
+      
+通常，查看系统的字符集和排序方式的设定可以通过下面的两条命令：
+      SHOW VARIABLES LIKE 'character%';
+      SHOW VARIABLES LIKE 'collation_%';
+       
+3、创建一张表：
+create table stu(
+snum smallint(5) zerofill not null default 0,
+name varchar(10) not null default '',
+gender char(1),
+age tinyint unsigned not null default 0
+)engine myisam charset utf8;
+
+4、往表中插入数据：
+insert into stu(name,gender,age)
+values
+("钟建东","男",32),
+("千百度","女",26);
+
+5、修改表中的数据：
+update stu set  name="钟剑东",age=31 where id=1;
+
+6、删除表中的某个数据：
+delete from stu  where id=1;
+
+7、查询指定列指定行数据：
+select age,name,gender from stu where id=2;
+
+8、
+整型（tinyint 1个字节、smallint 2个字节、mediumint 3个字节、int 4个字节、bigint 8个字节）：int（M）和zerofill一起使用才有意义，如int（5)  zerofill,当赋值为1时，内容是00001
+
+浮点型：float（M,D),M代表总位数，D代表小数点后的位数
+定点型：decimal(M,D)，整数部分和小数部分是分开存储的，比float精确。
+
+char：定长，对于char(N)，不够N个长度，在尾部补齐N个空格，取出时把尾部空格删掉，这意味着如果字符串本身尾部有空格，将会丢失。char（M），M限制为0<=M<=255
+varchar：变长，对于varchar(N)，不用空格补齐，但在内容前，有1-2个字节存放字符个数。varchar(M)，M限制为0<=M<=65535
+
+text：文本类型，可以存比较大的文本段，搜索 速度稍慢。不能加默认值。longtext
+blob：二进制类型，用于存放图像、音频等二进制信息。意义在于防止因为字符集的原因导致数据丢失。
+
+timestamp  CURRENT_TIMESTAMP
+year类型 范围1901——2155
+
+9、修改表
+增加列：
+alter table test  add username char(20) not null default '' after id;
+alter table test  add id int unsigned not null default 0 first;
+删除列：
+alter table test drop username;
+修改列类型：
+alter table test modify vca char(6) not null default '';(不能修改列名)
+修改列名及列类型：
+ALTER TABLE 表名 CHANGE 旧列名 新列名 列类型 [FIRST|AFTER 列名]
+alter table test change vca ca varchar(20) not null default '';
+
+
+更改表名：
+ALTER TABLE 表名 RENAME 新表名;
+RENAME TABLE 表名 TO 新表名；
+
+10、ecshop
+show create table shop.goods;
+insert into goods select goods_id,cat_id,goods_sn,goods_name,goods_name_style,click_count,goods_number,market_price,shop_price,add_time,is_best,is_new,is_hot from shop.goods;
+
+select goods_id,goods_name,(market_price-shop_price) as 优惠 from goods having 优惠>200
+
+update interview set num=floor(num/10)*10 where num >=20 and num<=39; 
+
+select count(*) from goods; 但是Innodb的表，用count（*）效率低
+
+select cat_id,sum(goods_number) from goods group by cat_id;
+
+select distinct cat_id from goods;//返回不同的cat_id
+
+11、有一个补考成绩表，查询出补考成绩有2门以上不及格学生的平均成绩。
+create table bkb
+(
+name varchar(20),
+subject varchar(20),
+score tinyint(4)
+)engine myisam charset utf8;
+
+insert into bkb
+values
+('张三','语文',90),
+('张三','数学',55),
+('张三','英语',45),
+('李四','语文',58),
+('李四','英语',46),
+('王五','英语',48);
+
+select name,avg(score),sum(score<60) as gks from bkb group by name having gks>=2;
+
+12、为什么值一般不为NULL
+NULL不好比较；效率不高，影响索引效果。
+
+13、select count(*)/count(1) from goods;统计goods表多少条记录   select count(列名) from goods;查询该列不为null的行数
+        Innodb的表，用count(*)效率很低
+        select max(shop_price) from goods;
+        select avg(shop_price) from goods;
+     
+14、group by
+一次计算出每个cat_id下的商品数目
+select  cat_id, sum(goods_number) from goods group by cat_id;
+select  cat_id,avg(shop_price) from goods group by cat_id;
+
+15、create table minigoods like goods;
+        insert into minigoods select * from goods limit 3;
+        
+ 16、select  goods_id,goods_name,cat_name from minigoods,category where minigoods.cat_id=category.cat_id;
+         select  goods_id,goods_name,cat_name from minigoods left join category on minigoods.cat_id=category.cat_id;
+         
+ 17、
+         create table a(
+         id int,
+         subject char(2),
+         score int
+         )engine myisam charset utf8;
+         
+         create table b(
+         id int,
+         name varchar(4)
+         )engine myisam charset utf8;
+         
+         insert into a
+         values
+         (1,'数学',90),
+         (1,'政治',78),
+         (2,'英语',88),
+         (2,'化学',72),
+         (3,'历史',64),
+         (4,'语文',93);
+         
+         insert into b
+         values
+         (1,'张成文'),
+         (2,'林娇娇'),
+         (4,'黄君璧');
+         
+         select a.*,b.* from a left join b on a.id=b.id;
+         select a.*,b.* from a right join b on a.id=b.id;
+         select a.*,b.* from a inner join b on a.id=b.id;
+         
+18、       
+C表:
++------+------+
+| id   | num  |
++------+------+
+| a    |    5 |
+| b    |   10 |
+| c    |   15 |
+| d    |   10 |
++------+------+
+
+D表:
++------+------+
+| id   | num  |
++------+------+
+| b    |    5 |
+| c    |   15 |
+| d    |   20 |
+| e    |   99 |
++------+------+
+要求查询出以下效果:
++------+----------+
+| id   | sum(num) |
++------+----------+
+| a    |        5 |
+| b    |       15 |
+| c    |       30 |
+| d    |       30 |
+| e    |       99 |
++------+----------+
+
+select id,sum(num) from (select * from c union all select * from d) as tmp group BY id;
+
+19、有以下2张表，根据给出的表结构，写出建表SQL语句。
+Match 赛程表
+字段名称	字段类型	描述
+matchID	int	主键
+hostTeamID	int	主队的ID
+guestTeamID	int	客队的ID
+matchResult	varchar(20)	比赛结果，如（2:0）
+matchTime	date	比赛开始时间
+
+Team 参赛队伍表
+字段名称	字段类型	描述
+teamID	int	主键
+teamName	varchar(20)	队伍名称
+
+Match的hostTeamID与guestTeamID都与Team中的teamID关联
+查出 2006-6-1 到2006-7-1之间举行的所有比赛，并且用以下形式列出：
+恒大  2：0  申花 2006-6-21
+写出查询语句。
+create table m
+(
+mid int,
+hid int,
+gid int,
+mres varchar(20),
+mtime date
+)engine myisam charset utf8;
+
+create table t
+(
+tid int,
+tname varchar(20)
+)engine myisam charset utf8;
+
+insert into m
+values
+(1,1,2,'2:0','2006-05-21'),
+(2,2,3,'1:2','2006-06-21'),
+(3,3,1,'2:5','2006-06-25'),
+(4,2,1,'3:2','2006-07-05');
+
+insert into t
+values
+(1,'广州恒大'),
+(2,'上海申花'),
+(3,'福建国安');
+select t1.tname,mres,t2.tname from (m left join t as t1 on m.hid=t1.tid) left join t as t2 on m.gid=t2.tid where mtime between '2006-06-01' and '2006-07-01';
+
+20、select cat_id,goods_name from goods where cat_id=4
+        union all select cat_id,goods_name from minigoods where cat_id=4;
+
+21、select goods_name,shop_price,floor(rand()*10+5.999) as bonus from goods;
+
+22、select cat_name,group_concat(goods_name) from goods left join category on goods.cat_id=category.cat_id group by goods.cat_id;
+
+23、length返回字节数；char_length返回字符数。
+mysql> select *,length(tname) from t;
++------+----------+---------------+
+| tid  | tname    | length(tname) |
++------+----------+---------------+
+|    1 | 广州恒大        |            12 |
+|    2 | 上海申花      |            12 |
+|    3 | 福建国安         |            12 |
++------+----------+---------------+
+3 rows in set (0.01 sec)
+
+mysql> select length("上海申花");
++--------------------+
+| length("上海申花")      |
++--------------------+
+|                  8 |
++--------------------+
+1 row in set (0.00 sec)
+
+
+mysql> select char_length("上海申花");
++-------------------------+
+| char_length("上海申花")      |
++-------------------------+
+|                       4 |
++-------------------------+
+1 row in set (0.00 sec)
+
+mysql> select *,char_length(tname) from t;
++------+----------+--------------------+
+| tid  | tname    | char_length(tname) |
++------+----------+--------------------+
+|    1 | 广州恒大        |                  4 |
+|    2 | 上海申花      |                  4 |
+|    3 | 福建国安         |                  4 |
++------+----------+--------------------+
+3 rows in set (0.00 sec)
+
+24、mysql> select position('@' in 'test@126.com');
++---------------------------------+
+| position('@' in 'test@126.com') |
++---------------------------------+
+|                               5 |
++---------------------------------+
+1 row in set (0.00 sec)
+
+mysql> select right('test@126.com',3);
++-------------------------+
+| right('test@126.com',3) |
++-------------------------+
+| com                     |
++-------------------------+
+1 row in set (0.00 sec)
+
+25、
+create table member(
+uname varchar(20),
+email varchar(20)
+)engine myisam charset utf8;
+
+insert into member
+values
+('张三','zhangsan@yd.com'),
+('李四','lisi@qq.com'),
+('王五','王五@qq.com'),
+('赵六','zhaoliu@gmail.com'),
+('郑智化','zhengzhihua@126.com');
+
+mysql> select uname,right(email,char_length(email)-position('@' in email)) from
+member;
++--------+--------------------------------------------------------+
+| uname  | right(email,char_length(email)-position('@' in email)) |
++--------+--------------------------------------------------------+
+| 张三       | yd.com                                                 |
+| 李四       | qq.com                                                 |
+| 王五       | qq.com                                                 |
+| 赵六       | gmail.com                                              |
+| 郑智化     | 126.com                                                |
++--------+--------------------------------------------------------+
+5 rows in set (0.00 sec)
+
+26、
+mysql> select now();
++---------------------+
+| now()               |
++---------------------+
+| 2016-01-01 19:04:11 |
++---------------------+
+1 row in set (0.00 sec)
+
+mysql> select curdate();
++------------+
+| curdate()  |
++------------+
+| 2016-01-01 |
++------------+
+1 row in set (0.00 sec)
+
+mysql> select curtime();
++-----------+
+| curtime() |
++-----------+
+| 19:05:52  |
++-----------+
+1 row in set (0.00 sec)
+
+27、create table jiaban( 
+        overtime int,
+        dt date
+        )engine myisam charset utf8;
+        
+        insert into jiaban
+        values
+        (2,'2015-12-1'),
+        (2,'2015-12-2'),
+        (3,'2015-12-3'),
+        (1,'2015-12-7'),
+        (3,'2015-12-8'),
+        (2,'2015-12-9');
+        
+        mysql> select sum(overtime),week(dt) as wk from jiaban group by wk;
++---------------+------+
+| sum(overtime) | wk   |
++---------------+------+
+|             7 |   48 |
+|             6 |   49 |
++---------------+------+
+2 rows in set (0.00 sec)
+
+
+28、create table stu(
+        sname varchar(20),
+        gender int
+        )engine myisam charset utf8;
+        
+        insert into stu
+        values
+        ('张三',1),
+        ('韩梅梅',0),
+        ('李宇春',2);
+        
+mysql> select sname, case gender WHEN 0 then '女' when 1 then '男' else '保密' end as 性别 from stu;
++--------+------+
+| sname  | 性别    |
++--------+------+
+| 张三       | 男     |
+| 韩梅梅     | 女    |
+| 李宇春      | 保密     |
++--------+------+
+3 rows in set (0.00 sec)
+
+mysql> select sname,if(gender=0,'优先','等待') as vip from stu;
++--------+------+
+| sname  | vip  |
++--------+------+
+| 张三       | 等待    |
+| 韩梅梅     | 优先     |
+| 李宇春      | 等待    |
++--------+------+
+
+mysql> select * from test3;
++-------+
+| sname |
++-------+
+| 张三      |
+| 李四      |
+| NULL  |
++-------+
+3 rows in set (0.00 sec)
+
+mysql> select ifnull(sname,'sname') from test3;
++-----------------------+
+| ifnull(sname,'sname') |
++-----------------------+
+| 张三                      |
+| 李四                      |
+| sname                 |
++-----------------------+
+3 rows in set (0.00 sec)
+
+29、view
+mysql> create view view1 as select cat_id,avg(shop_price) as pj from goods group
+ by cat_id;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> select * from view1;
++--------+-------------+
+| cat_id | pj          |
++--------+-------------+
+|      2 |  823.330000 |
+|      3 | 1746.066667 |
+|      4 | 2297.000000 |
+|      5 | 3700.000000 |
+|      8 |   75.333333 |
+|     11 |   31.000000 |
+|     13 |   33.500000 |
+|     14 |   54.000000 |
+|     15 |   80.000000 |
++--------+-------------+
+9 rows in set (0.00 sec)
+
+30、取出每个栏目下价格最贵的商品ID、商品名称、商品价格
+select cat_id,goods_id,goods_name,shop_price from goods where shop_price in (select max(shop_price) from goods group by cat_id);
+
+31、截取字符串
+从左开始截取字符串：left(str, length)；说明：left(被截取字段，截取长度)
+从右开始截取字符串：right(str, length)；说明：right(被截取字段，截取长度)
+截取字符串：substring(str, pos)；说明：substring(被截取字段，从第几位开始截取)
+substring(str, pos, length)；substring(被截取字段，从第几位开始截取，截取长度)
+
+select right(md5(1+rand()*9999),6);
+select md5(concat(md5('engine'),'a2058c'));
+
+insert into pre_ucenter_members set username='ptest6',salt=right(md5(1+rand()*9999),6),password=md5(concat(md5('engine'),salt)),email='ptest6@qq.com';
+

@@ -1,0 +1,74 @@
+1、目录dir1、dir2、dir3下分别有file1.txt、file2.txt、file3.txt，请使用脚本将文件改为dir1_file1.txt、dir2_file2.txt、dir3_file3.txt
+#!/bin/bash
+file=`ls dir[123]/file[123].txt`
+for i in $file
+do
+mv $i ${i%/*}/${i%%/*}_${i##*/}
+done
+
+ls dir[123]/* |grep txt|xargs -I file sh -c 'a=file;b=${a%/*};c=${a##*/};mv file ./${b}/${b}_${c}'
+
+2、找出系统内大于50k，小于100k的文件，并删除它们。
+#!/bin/bash
+file=`find / -size +50k -size -100k`
+for i in $file;
+do
+rm -rf $i
+done
+
+
+3、把当前目录（包含子目录）下所有后缀为“.sh”的文件后缀变更为“.shell”
+#!/bin/bash
+str=`find ./ -name \*.sh`
+for i in $str;
+do
+mv $i ${i%sh}shell
+done
+
+4、输入2个数字，比较两个数的大小并输出结果。
+#!/bin/bash
+echo "Please input two numbers:"
+read a
+read b
+if test $a -eq $b
+then echo "$a=$b"
+elif test $a -gt $b
+then echo "$a>$b"
+else echo "$a<$b"
+fi
+
+5、shell打印九九乘法表
+#!/bin/bash
+for a in `seq 1 9`
+do
+echo " "
+for b in `seq 1 9`
+do 
+if [ $a -ge $b ];then
+echo -n "$a"x"$b"="$(expr $a \* $b)  "
+fi
+done
+done
+echo " "
+
+6、有1、2、3、4共4个数字，能组成多少个互不相同且无重复数字的三位数？
+#!/bin/bash
+num=0;
+for i in 1 2 3 4 
+  do  
+    for j in 1 2 3 4 
+    do  
+      for k in 1 2 3 4 
+        do  
+        if [ "$i" -ne "$j" -a "$j" -ne "$k" -a "$i" -ne "$k" ]; then
+            #let num=num+1
+            num=`expr $num + 1`
+        fi  
+      done
+    done
+done
+echo $num
+
+
+
+07973

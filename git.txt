@@ -1,0 +1,125 @@
+git config:
+git config -l:查看所有配置信息
+git config --global user.name  zjd2626
+git config --global user.email zjd2626@126.com
+git config --global core.editor vim
+git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%C(bold blue)<%an>%Creset' --abbrev-commit"
+
+
+
+mkdir cidemo &&cd cidemo
+git init :初始化一个git仓库
+git status ：查看git仓库状态
+
+
+服务器初始化git仓库：
+mkdir /opt/git
+cd /opt/git
+git init --bare test.git
+
+其它用户通过
+git clone ssh://user@host/path/test.git or git clone user@host:/path/test.git
+
+或者自己初始化一个本地仓库
+git init .
+echo "git test">git.txt
+git add git.txt ：添加git.txt到暂存区
+git commit -m "add git.txt" ：提交git.txt到本地仓库
+git remote add origin ssh://user@host/path/test.git :添加名为origin的远程仓库
+git remote -v ：查看远程仓库信息
+git push -u origin master :推送本地master分支到远程仓库并建立关联关系
+
+
+git add .   #把工作区的所有变化提交到暂存区
+git add -u 仅监控已经add的文件（即tracked文件），但不会提交新文件（untracked）
+
+
+git远程操作：
+
+$ git clone <版本库的网址> <本地目录名>
+git remote -v ：查看远程仓库地址
+git remote show <主机名> ：查看该主机的详细信息
+git remote rm <主机名>：命令用于删除远程主机。
+git remote rename <原主机名> <新主机名>：命令用于远程主机的改名
+
+git fetch <远程主机名>：将某个远程主机所有分支的更新，全部取回本地。
+git fetch <远程主机名> <分支名>：指定分支名，取回特定分支的更新
+git fetch origin dev：获取远程dev分支的更新
+git checkout -b dev origin/dev:checkout本地dev分支并和origin/dev进行关联
+git merge origin/dev: 合并远程dev分支到当前分支
+
+
+git branch命令的-r选项，可以用来查看远程分支，-a选项查看所有分支
+git branch -avv ：查看所有分支和关联关系
+git branch --set-upstream master origin/next：指定master分支追踪origin/next分支
+
+
+
+git pull：
+git pull <远程主机名> <远程分支名>:<本地分支名>：取回远程主机某个分支的更新，再与本地的指定分支合并
+git pull origin next:master:取回origin主机的next分支，与本地的master分支合并
+如果远程分支是与当前分支合并，则冒号后面的部分可以省略。如下：
+$ git pull origin next   #取回origin主机的next分支，并与当前分支合并
+
+当前分支与远程分支存在追踪关系，git pull就可以省略远程分支名
+$ git pull origin
+
+
+git push：
+$ git push <远程主机名> <本地分支名>:<远程分支名>
+如果省略本地分支名，则表示删除指定的远程分支，因为这等同于推送一个空的本地分支到远程分支。
+如果省略远程分支名，则表示将本地分支推送与之存在"追踪关系"的远程分支（通常两者同名），如果该远程分支不存在，则会被新建。
+例如：
+    $ git push origin :master
+    # 等同于
+    $ git push origin --delete master
+	
+	$ git push origin master#将本地的master分支推送到origin主机的master分支。如果后者不存在，则会被新建
+	
+git push -u origin master  将本地的master分支推送到origin主机，同时-u指定origin为默认主机，以后就可以不加任何参数使用git push了
+
+不带任何参数的git push，默认只推送当前分支，这叫做simple方式。还有一种情况，就是不管是否存在对应的远程分支，将本地的所有分支都推送到远程主机，这时需要使用--all选项	
+$ git push --all origin  #将所有本地分支都推送到origin主机
+
+git push不会推送标签（tag），除非使用--tags选项
+$ git push origin --tags
+
+
+
+
+git log：查看commit日志
+git log --oneline:每条记录只显示一行信息
+ 
+git diff commit_id1 commit_id2 ：比较2次提交的区别
+git diff master..dev :比较两个分支的区别
+
+
+git tag tag_name：添加一个本地版本标识
+git push origin tag_name: 推送该版本标识到远程仓库
+
+git branch -av :查看本地分支和远程分支详细信息
+git branch branch_name：基于当前分支创建分支
+git checkout branch_name:切换到branch_name分支
+git push origin branch_name:推送branch_name分支到远程
+
+git merge branch_name:合并分支
+
+
+单个文件版本回退：
+git reset commit_id filename
+git checkout  filename
+git commit -am "reset filename"
+git push origin master
+
+
+整个项目回退：
+git reset --hard commit_id
+git add -a
+git commit -am "reset to last version"
+git push origin master
+
+
+
+常见问题：
+fatal：refusing to merge unrelated histories 说是拒绝合并不相关的历史，确实本地是新加的内容还重未和线上连接过。
+解决办法：git pull origin master --allow-unrelated-histories 就是告诉系统我允许合并不相关历史的内容。
