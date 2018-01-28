@@ -117,6 +117,13 @@ git push origin branch_name:推送branch_name分支到远程
 git merge branch_name:合并分支
 
 
+git reset:
+1、git reset --mixed：此为默认方式，不带任何参数的git reset，即是这种方式，它回退到某个版本(后续修改仍在本地，但未放到缓存区中)，如果确定要回退，需要执行git checkout .
+
+2、git reset --soft：回退到某个版本，但后续的修改仍在本地（且已经加到缓存区），如果确定要回退到某个版本，需要执行git reset . 再git checkout .;如果还要提交，直接commit即可
+
+3、git reset  --hard：彻底回退到某个版本，本地的源码也会变为某个版本的内容，此命令慎用
+
 单个文件版本回退：
 git reset commit_id filename
 git checkout  filename
@@ -124,12 +131,9 @@ git commit -am "reset filename"
 git push origin master
 
 
-整个项目回退：
-git reset --hard commit_id
-git add -a
-git commit -am "reset to last version"
-git push origin master
-
+git revert与git reset的区别：
+1、git revert仅仅是撤销某次提交，而git reset会将撤销点之后的操作都回退。
+2、git revert是用一次新的commit来回滚之前的commit，git reset是直接恢复到指定的commit，后续的commit都没有了
 
 .gitignore
 全局忽略:
