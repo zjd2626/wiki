@@ -1,0 +1,1290 @@
+
+动态转发（SOCKS5代理）：
+命令格式：ssh -D <local port> <SSH Server>
+ssh -fnND 0.0.0.0:20058 172.16.50.20  //f后台执行，必须配合n使用，N不打开远程shell，D绑定本地20058端口
+
+-g Allow remote hosts to connect to forwarded ports.
+在-L/-R/-D参数中，允许远程主机连接到建立的转发的端口，如果不加这个参数，只允许本地主机建立连接。
+
+修改配置文件 ~#vi /etc/ssh/sshd_config
+在文件最后加入 gatewayports yes 
+
+
+本地端口转发：
+有时，绑定本地端口还不够，还必须指定数据传送的目标主机，从而形成点对点的"端口转发"。为了区别后文的"远程端口转发"，我们把这种情况称为"本地端口转发"（Local forwarding）。
+假定host1是本地主机，host2是远程主机。由于种种原因，这两台主机之间无法连通。但是，另外还有一台host3，可以同时连通前面两台主机。因此，很自然的想法就是，通过host3，将host1连上host2。
+我们在host1执行下面的命令：
+    　　$ ssh -L 2121:host2:21 host3
+命令中的L参数一共接受三个值，分别是"本地端口:目标主机:目标主机端口"，它们之间用冒号分隔。这条命令的意思，就是指定SSH绑定本地端口 2121，然后指定host3将所有的数据，转发到目标主机host2的21端口（假定host2运行FTP，默认端口为21）。
+这样一来，我们只要连接host1的2121端口，就等于连上了host2的21端口。
+    　　$ ftp localhost:2121
+"本地端口转发"使得host1和host3之间仿佛形成一个数据传输的秘密隧道，因此又被称为"SSH隧道"。
+
+
+远程端口转发：
+既然"本地端口转发"是指绑定本地端口的转发，那么"远程端口转发"（remote forwarding）当然是指绑定远程端口的转发。
+还是接着看上面那个例子，host1与host2之间无法连通，必须借助host3转发。但是，特殊情况出现了，host3是一台内网机器，它可以连接外网的host1，但是反过来外网的host1连不上内网的host3。这时，"本地端口转发"就不能用了，怎么办？
+解决办法是，既然host3可以连host1，那么就从host3上建立与host1的SSH连接，然后在host1上使用这条连接就可以了。
+我们在host3执行下面的命令：
+    　　$ ssh -R 2121:host2:21 host1
+R参数也是接受三个值，分别是"远程主机host1端口:目标主机:目标主机端口"。这条命令的意思，就是让host1监听它自己的2121端口，然后将所有 数据经由host3，转发到host2的21端口。由于对于host3来说，host1是远程主机，所以这种情况就被称为"远程端口绑定"。
+绑定之后，我们在host1就可以连接host2了：
+    　　$ ftp localhost:2121
+这里必须指出，"远程端口转发"的前提条件是，host1和host3两台主机都有sshd服务器和ssh客户端。
+
+host1(172.16.2.164)，host3(172.16.50.20)，host2(192.168.1.130)
+host1和host3互通，host1无法访问host2，host3可以访问host2
+现在host1需要访问host2的80端口，那么可以在host1上运行ssh -fnNL 5900:192.168.1.130:80 172.16.50.20
+或者在host3上运行ssh -fnNR 5900:192.168.1.130:80 172.16.2.164即可
+
+killp:
+#!/bin/bash
+if [ "$#" -lt "1" ];then
+	echo "Usage: killp keyword."
+	exit
+fi
+for i in `ps -ef |grep "$i"|grep -v "grep"|awk '{print $2}'`;do kill -9 $i;done;
+
+
+autossh:
+for ip in `cat ip.txt`
+do
+expect <<end
+set timeout 2
+spawn ssh-copy-id -i clouder@$ip
+expect {
+"yes/no" {send "yes\r";exp_continue}
+}
+expect "password:"
+set timeout 2
+send "engine\r"
+expect eof
+end
+done
+
+
+限速：
+tc qdisc add dev eth0 root tbf rate 10Mbit latency 50ms burst 10000 mpu 64
+tc qdisc del dev eth0 root
+tc -s qdisc ls dev eth0
+
+
+export GTK_IM_MODULE=ibus
+export XMODIFIERS=
+
+
+export LANG="zh_CN.UTF-8"
+export LC_CTYPE="zh_CN.UTF-8"
+export GTK_IM_MODULE="scim"
+export XMODIFIERS="@im=SCIM"
+export QT_IM_MODULE="scim"
+export XIM=SCIM
+export XIM_PROGRAM=SCIM
+
+
+export GTK_IM_MODULE=ibus
+export XMODIFIERS=@im=ibus
+export QT_IM_MODULE=ibus
+
+
+ORACLE
+1.修改/etc/hosts,运行netmgr配置监听，再查看tnsnames.ora及listener.ora文件
+2.启动数据库：
+sqlplus sys/engine as sysdba
+SQL>startup 
+SQL>show parameter local_listener  
+3.启动监听：
+lsnrctl start
+lsnrctl status
+4.如果要开机自动启动，修改/etc/oratab;然后在rc.local里面添加su oracle -lc "dbstart $ORACLE_HOME"、su oracle -lc "lsnrctl start"
+
+
+mysql绿色安装：
+下载tar.gz包，运行script中的安装脚本：./mysql_install_db --basedir=/home/clouder/soft/mysql/mysql-5.5.10-linux2.6-x86_64 --datadir=/home/clouder/soft/mysql/mysql-5.5.10-linux2.6-x86_64/data --skip-name-resolve --user=clouder
+
+在mysql bin目录中编写startmysql脚本：
+#!/bin/bash
+SCRIPT_PATH=`dirname "$0"`
+SCRIPT_PATH=`cd ${SCRIPT_PATH};pwd`
+$SCRIPT_PATH/mysqld --basedir=$SCRIPT_PATH/../ &
+
+shutdownmysql脚本：
+#!/bin/bash
+SCRIPT_PATH=`dirname "$0"`
+SCRIPT_PATH=`cd ${SCRIPT_PATH};pwd`
+$SCRIPT_PATH/mysqladmin -uroot -p shutdown
+
+
+http://li.nux.ro/download/nux/dextop
+
+
+正确的使用dd进行磁盘读写速度测试：
+if=xxx  从xxx读取，如if=/dev/zero,该设备无穷尽地提供0,（不产生读磁盘IO）
+of=xxx  向xxx写出，可以写文件，可以写裸设备。如of=/dev/null，"黑洞"，所有写入它的内容都会永远丢失. （不产生写磁盘IO）
+conv=sync   操作系统“写缓存”起作用,不加conv参数时默认使用该选项
+conv=fsync  表示把文件的“数据”和“metadata”都写入磁盘（metadata包括size、访问时间st_atime & st_mtime等等），因为文件的数据和metadata通常存在硬盘的不同地方，因此fsync至少需要两次IO写操作，fsync 与fdatasync相差不大。
+conv=fdatasync  表示只把文件的“数据”写入磁盘，fsync与fdatasync相差不大。
+
+对磁盘进行连续写入，不使用内存缓冲区，每次写入8k的数据，总共写入20万次
+dd if=/dev/zero of=test.bin bs=8k count=200000 conv=fdatasync
+
+
+利用netcat命令进行远程备份：
+在目的主机上执行此命令来接收数据并写入到文件chrome.rpm
+nc -l -p 20058 | dd of=chrome.rpm bs=4M
+
+在源主机上执行此命令发送文件chrome.rpm
+dd if=chrome.rpm bs=4M| nc < targethost-IP > 20058
+
+
+同步时间：
+ssh root@ip date -s @`date +%s.%N`  //修改ip的时间
+
+
+centos 6.6 xdmcp远程桌面：
+1.首先安装 xdm软件：yum install xdm
+vi /etc/X11/xdm/Xaccess:
+* allow
+
+vi /etc/gdm/custom.conf:
+[security]
+AllowRemoteRoot=true
+
+[xdmcp]
+Enable=true
+Port=177
+
+
+2.设置某用户的密码过期时间，使用usermod -e
+如果要统一设置用户的密码过期时间，那么就要修改/etc/login.defs里面的PASS_MAX_DAYS，比如修改所有用户的密码过期时间是30天：
+PASS_MAX_DAYS 30,值为99999，表示密码永不过期。
+linux下设置与修改用户失效时间及密码失效时间，用法：chage [选项] 用户名,chage -E 2010-09-30 zjd
+chage -l zjd  列出账户密码策略
+
+
+select ﻿date_add('2014-04-17 2:00:00', interval '1:10:10' hour_second); 
+select date_add(日期, interval 1 day); 
+
+
+
+
+列出某个IP地址所提供的共享文件夹
+smbclient -L 198.168.0.1 -U username%password
+像FTP客户端一样使用smbclient
+smbclient //192.168.0.1/tmp  -U username%password
+
+mount -t cifs -o  username=administrator,password=123456,iocharset=utf8,sec=ntlm //192.168.0.1/tmp  /mnt/tmp
+smbmount //192.168.0.1/tmp /mnt/tmp -o username=administrator
+
+
+
+出现以下信息：
+    Enter passphrase for key '/home/qingxu/.ssh/id_dsa':  
+执行：
+eval `ssh-agent`
+ssh-add
+
+
+watch
+
+time echo "scale=5000;4*a(1)" | bc -l -q
+
+
+
+
+sar 2 3 每隔2s，共采集3次
+1. 若 %iowait 的值过高，表示硬盘存在I/O瓶颈
+2. 若 %idle 的值高但系统响应慢时，有可能是 CPU 等待分配内存，此时应加大内存容量
+3. 若 %idle 的值持续低于1，则系统的 CPU 处理能力相对较低，表明系统中最需要解决的资源是 CPU 
+
+sar -b 2 3
+
+要判断系统瓶颈问题，有时需几个 sar 命令选项结合起来
+
+怀疑CPU存在瓶颈，可用 sar -u 和 sar -q 等来查看
+
+怀疑内存存在瓶颈，可用 sar -B、sar -r 和 sar -W 等来查看
+
+怀疑I/O存在瓶颈，可用 sar -b、sar -u 和 sar -d 等来查看
+
+
+
+# cat nvdisk-test
+[global]
+bs=512
+ioengine=libaio
+userspace_reap
+rw=randrw
+rwmixwrite=20
+time_based
+runtime=180
+direct=1
+group_reporting
+randrepeat=0
+norandommap
+ramp_time=6
+iodepth=16
+iodepth_batch=8
+iodepth_low=8
+iodepth_batch_complete=8
+exitall
+[test]
+filename=/dev/nvdisk0
+numjobs=1
+
+1. libaio工作的时候需要文件direct方式打开。
+2. 块大小必须是扇区的倍数。
+3. userspace_reap提高异步IO收割的速度。
+4. ramp_time的作用是减少日志对高速IO的影响。
+5. 只要开了direct,fsync就不会发生。
+6. stonewall#等待上一个任务完成再开始
+
+
+vi无权限写文件
+:w !sudo tee %
+
+
+硬盘性能指标
+顺序读写 （吞吐量，常用单位为MB/s）：文件在硬盘上存储位置是连续的。适用场景：大文件拷贝（比如视频音乐）。速度即使很高，对数据库性能也没有参考价值。
+4K随机读写 （IOPS，常用单位为次）：在硬盘上随机位置读写数据，每次4KB。适用场景：操作系统运行、软件运行、数据库。
+
+
+以下是使用通用I/O测试工具“fio”，并在指定数据块大小“4K、512K”、队列深度为“128”的条件下，对“SAS”以及“SSD”这两种机型磁盘进行的I/O基准性能测试所得出的测试数据。
+bw：磁盘的吞吐量，这个是顺序读写考察的重点
+iops：磁盘的每秒读写次数，这个是随机读写考察的重点
+
+
+fio -ioengine=libaio -bs=4k -direct=1 -thread -rw=randrw -rwmixread=70 -size=2G -filename=/dev/sdb -name="4K randrw test" -iodepth=1 -runtime=60
+unitestack:
+read : io=26500KB, bw=452244B/s, iops=110, runt= 60003msec
+write: io=11436KB, bw=195164B/s, iops=47, runt= 60003msec
+
+
+
+fio -ioengine=libaio -bs=512k -direct=1 -thread -rw=read -size=100G -filename=/dev/sdb -name="512k read test" -iodepth=1 -runtime=60
+unitestack:
+read : io=2048.0MB, bw=96368KB/s, iops=188, runt= 21762msec
+
+fio -ioengine=libaio -bs=512k -direct=1 -thread -rw=write -size=100G -filename=/dev/sdb -name="512k write test" -iodepth=1 -runtime=60
+write: io=1700.0MB, bw=29011KB/s, iops=56, runt= 60005msec
+
+
+#CentOSè‹±æ–‡çŽ¯å¢ƒä¸‹ä½¿ç”¨ä¸­æ–‡è¾“å…¥æ³•
+cp /usr/share/locale/zh_CN/LC_MESSAGES/ibus* /usr/share/locale/en_US/LC_MESSAGES
+vi /etc/X11/xinit/xinitrc.d/50-xinput.sh
+_im_language_list=
+add "en"
+
+#è§£å†³Linuxä¸‹Sparkçš„ä¹±ç é—®é¢˜
+mkdir /home/clouder/programs/spark/jre/lib/fonts
+mkdir /home/clouder/programs/spark/jre/lib/fonts/fallback
+cd /home/clouder/programs/spark/jre/lib/fonts/fallback
+ln -s /usr/share/fonts/wqy-zenhei/wqy-zenhei.ttc
+mkfontdir
+mkfontscale
+
+
+blkid查看uuid
+
+
+
+git乱码：
+git config --global core.quotepath false
+git config --global gui.encoding utf-8
+git config --global i18n.commitencoding utf-8
+git config --global i18n.logoutputencoding gbk
+export LESSCHARSET=utf-8
+
+
+mkdir testgit
+cd testgit
+git init
+git add .
+git commit -m "init"
+git remote add origin ssh://你的IP/~/testgit/.git
+git push origin master
+git remote show origin //显示远程信息
+
+
+
+for i in `ls  fio_randrd*`;do mv -f $i `echo $i |sed 's/randrd/randread/'`;done
+
+
+
+xenserver挂载ISO：
+1、通过ssh或者是xenCenter登录到xenserver用 " vgdisplay " 查看卷组信息，并把VG Name记录下来
+  lvdisplay VG_XenStorage-205eecff-2466-84fe-56d5-81472e44f3c2 #查看该区
+
+2、在VG上创建用于存放ISO的 LV（逻辑卷），并分配大小和命名，我觉得给他20G就够了，名字就叫local_iso吧
+  #lvcreate -L 20G -n local_iso  VG_XenStorage-f648889e-43d3-84cc-724e-9ee3ddf967b0
+
+3、格式化刚创建的LV
+
+    # mkfs.ext3  /dev/VG_XenStorage-f648889e-43d3-84cc-724e-9ee3ddf967b0/local_iso
+
+4、创建本地挂载目录
+
+   #mkdir /local_iso
+
+   vgchange -a y #激活所有卷组
+
+5、通过编辑/etc/fstab 来设置自动挂载刚刚创建的逻辑卷
+
+   #vi /etc/fstab
+
+   在 /etc/fstab里添加这一行/dev/VG_XenStorage-f648889e-43d3-84cc-724e-9ee3ddf967b0/local_iso    /local_iso    ext3   defaults 0 0
+
+6、用mount命令挂载逻辑卷
+
+   #mount /local_iso
+
+7、用wget下载工具把 Internet 上的ISO文件下载到 /localhost_iso目录
+
+wget -c http://mirror.stanford.edu/yum/pub/centos/5.8/isos/x86_64/CentOS-5.8-x86_64-bin-DVD-1of2.iso
+
+8、使用 xe 命令创建SR
+
+   #xe sr-create name-label=local_iso type=iso device-config:location=/local_iso device-config:legacy_mode=true content-type=iso
+
+9、xenCenter 连接到xenserver后会发现多了一个iso_image的本地存储，如果iso_image里没有刚下载的ISO文件的话那么使用以下命令更新一下
+
+    #xe-mount-iso-sr /local_iso
+    #xe-toolstack-restart 
+OK，大功告成，这样子安装VM的时候就可以用local_iso里的ISO文件了
+
+
+
+pkgs.org
+www.rpmfind.net
+
+
+
+
+raid：
+
+查看raid信息：
+cat /proc/mdstat
+mdadm -D /dev/md127
+
+创建阵列：
+mdadm -C /dev/md127 -c=512 -l 0 -n 4 /dev/sd{a,b,c,d}
+mdadm --create /dev/md127 --chunk=512 --level=0 --raid-devices=4 /dev/sd{a,b,c,d}
+mdadm不采用/etc/mdadm.conf作为主要配置文件，它可以完全不依赖该文件而不会影响阵列的正常工作。该配置文件的主要作用是方便跟踪软RAID的配置。对该配置文件进行配置是有好处的，但不是必须的。推荐对该文件进行配置。
+格式：
+DEVICE 参与阵列的设备
+ARRAY 阵列的描述
+
+通常可以这样来建立：
+echo DEVICE /dev/sd{b,c,d}1 >> /etc/mdadm.conf
+mdadm -D --scan >> /etc/mdadm.conf
+
+结果如下：
+# cat /etc/mdadm.conf
+DEVICE /dev/sdb1 /dev/sdc1 /dev/sdd1
+ARRAY /dev/md0 level=raid0 num-devices=3 UUID=8ba81579:e20fb0e8:e040da0e:f0b3fec8
+
+##查看阵列详细信息
+mdadm -D /dev/md127 或mdadm --detail /dev/md127
+
+停止阵列：
+mdadm -S /dev/md127  #注意：停止后，原组成阵列的磁盘将处于空闲状态，一旦误操作这些磁盘，将不能再重启激活原阵列。
+
+软RAID是基于系统的，当原系统损坏了，需要重新装配。将上述已经停止的阵列重新激活：
+mdadm -A /dev/md127 /dev/sd{a,b,c,d}
+
+可以使用--fail指定坏磁盘，并--remove走：
+mdadm /dev/md0 --fail /dev/sdc1 --remove /dev/sdc1
+※需要注意的是，对于某些阵列模式，如RAID0等，是不能用--fail和--remove的。
+
+增加一个新的磁盘到阵列:
+mdadm /dev/md0 --add /dev/sdc1
+※需要注意的是，对于某些阵列模式，如RAID0等，是不能用--add的。
+
+
+
+
+iscsi:
+pvcreate /dev/md127
+vgcreate iscsi /dev/md127
+vgdisplay iscsi
+lvcreate iscsi --name target1 -L 2000G
+lvdisplay
+
+mdadm -S /dev/md127
+mdadm --misc --zero-superblock /dev/sda
+mdadm --misc --zero-superblock /dev/sdb
+mdadm --misc --zero-superblock /dev/sdc
+mdadm --misc --zero-superblock /dev/sdd
+
+mdadm -D /dev/md127
+
+vgremove iscsi --force
+
+
+我们有这样的需求：Linux系统下一个文件不允许别人修改、删除或者只允许添加，我们就可以使用chattr命令。chattr +i test.txt
+
+
+
+
+
+CentOS 7网卡名重命名：
+vi /etc/sysconfig/grub
+增加“net.ifnames=0 biosdevname=0”，编辑后的文件内容：
+GRUB_CMDLINE_LINUX=”rd.lvm.lv=vg0/swap vconsole.keymap=us crashkernel=auto  vconsole.font=latarcyrheb-sun16 net.ifnames=0 biosdevname=0 rd.lvm.lv=vg0/usr rhgb quiet”
+执行：grub2-mkconfig -o /boot/grub2/grub.cfg
+重启后重命名并修改/etc/sysconfig/network-scripts/ifcfg-*
+
+
+
+
+[root@localhost ~]# rpcinfo -p 192.168.145.100
+[root@localhost ~]# showmount -e 192.168.145.100 查看145.100上的共享文件
+fuser -kv /mnt/public
+
+
+
+
+svn export -r 11893 svn://172.16.2.139/qa/test.txt #导出版本11893 test.txt
+svn log test.txt -l 5  #查看最近5条记录
+
+
+
+ethtool eth1
+dhclient eth1
+
+
+telnet测试邮件服务器
+telnet ip 25
+helo test
+auth login
+此时提示：334 输入用户名：（用echo -n "username" |base64）
+然后提示输入密码：（用echo -n "password" |base64）
+mail from:
+rcpt to:
+data
+subject:test
+邮件正文(以.然后回车换行结束并发送)
+
+
+
+
+iscsi Target (TGT) 
+配置target.conf (TGT) 
+ vim /etc/tgt/targets.conf 
+//添加如下 
+<target iqn.2012-04.com.test:server.target1> 
+    backing-store /dev/VolGroup/iscsi
+    lun 10 
+</target> 
+ 
+//此配置文档语法如下： 
+<target iqn.相关装置的target名称> 
+    backing-store /你的/虚拟装置/完整名称-1  <==LUN 1 
+    backing-store /你的/虚拟装置/完整名称-2  <==LUN 2 
+    lun N                                 <==LUN 10 自定义lun
+</target> 
+//iqn 名称规范 
+iqn.yyyy-mm.<reversed domain name>:identifier 
+iqn.年年-月.单位网域名的反转写法:这个分享的target名称 
+ 
+启动并检查tgt  
+[root@localhost yum.repos.d]# /etc/init.d/tgtd start 
+//tgtd 进程使用 tcp 3260 端口 
+# lsof -i :3260 
+
+
+linux initiator 设置
+检查系统是否安装 iscsi-target-utils 
+//iscsi-initiator-utils：挂载target 的磁盘到Linux 本机上 
+$ rpm -qa | grep scsi 
+iscsi-initiator-utils-6.2.0.871-0.10.el5 
+ 
+iscsi initiator 配置文档与管理程序 
+/etc/iscsi/iscsid.conf  主要的配置文档，用于连接到 iSCSI target 
+/sbin/iscsid            启动 iSCSI initiator 的服务进程 
+/sbin/iscsiadm          用于管理 iSCSI initiator  
+/etc/init.d/iscsid      模拟成 iSCSI initiater 的服务 
+/etc/init.d/iscsi       在本机成为 iSCSI initiator 后，会调用此脚本，用于登入 iSCSI target 
+/etc/iscsi/initiatorname.iscsi  initiator 名称
+ 
+启动 iscsi-initiator  
+$ systemctl start iscsi 
+systemctl enable iscsi
+
+
+
+
+査看可用的target 
+iscsiadm -m node
+
+载入target
+iscsiadm -m node -T iqn.2015-07.wiscom:wiscom20 -p 10.10.11.7:3260 -l
+
+卸载target
+$ iscsiadm -m node -T iqn.2012-04.com.test:server.target1 --logout 
+
+删除target  
+//刪除 target 连接信息，再次 ll /var/lib/iscsi/nodes/ 为0 
+192.168.57.71 [~]$ iscsiadm -m node -o delete -T iqn.2012-04.com.test:server.target1
+tgt-admin -s 或者tgtadm --lld iscsi --mode target --op show 都可以查看qin号、设备连接信息和scsi_id号
+iscsiadm --mode discoverydb --type sendtargets --portal 192.168.1.10
+
+iscsiadm -m discovery -t st -p 10.10.11.7:3260
+
+
+-m discovery　　//侦测target
+-t sendtargets　　//通过iscsi协议
+-p IP:port　　//指定target的IP和port，不写port的话，默认为3260
+
+
+查看目前连接状态：iscsiadm -m session
+刪除所有 node 信息 (需重新 discovery) ：iscsiadm -m node --op delete 
+
+iscsiadm -m session -i 查看挂载盘的信息
+iscsiadm -m node -U all 卸载
+
+
+
+
+
+批量替换文件夹中字符串：
+1、sed -i 's/172.16.15.18/192.168.70.91/g' *.sh
+2、find . -name "*.sh" -exec sed -i 's/172.16.15.18/192.168.70.91/g' {} \;
+3、find . -name "*.sh" |xargs sed -i 's/172.16.15.18/192.168.70.91/g'
+4、grep -irl '172.16.15.18' |xargs sed -i 's/172.16.15.18/192.168.70.91/g'
+
+
+-exec和xargs的区别：
+-exec
+    1.参数是一个一个传递的，传递一个参数执行一次，效率低
+    2.文件名有空格等特殊字符也能处理
+-xargs 
+    1.一次将参数传给命令，可以使用-n控制参数个数
+    2.处理特殊文件名需要采用如下方式：find . -name "*.txt" -print0 |xargs -0 rm {} 
+技巧： find -print0  与 xargs -0 的结合避免文件名有特殊字符如空格，引号等无法处理：
+    3.有些命令不支持多个参数，需要用-n 1
+
+
+find . -name "*.txt"  -exec echo {} \;
+find . -name "*.txt"  -exec echo {} +
+find . -name "*.txt" |xargs echo
+find . -name "*.txt" |xargs -n 1 echo
+
+
+优化系统：
+编辑/etc/security/limits.conf  增加或修改以下配置：
+vim /etc/security/limits.conf
+ # 添加或修改如下的行
+* soft nproc 131072
+* hard nproc 131072
+* soft nofile 655350
+* hard nofile 655350
+
+
+编辑/etc/sysctl.conf  增加或修改以下配置：
+vi /etc/sysctl.conf
+ # 添加或修改如下的行
+fs.file-max = 6815744
+net.ipv4.tcp_max_tw_buckets = 20000
+
+
+检查磁盘状态：
+smartctl -i /dev/sda
+smartd
+
+
+keepalived:
+/sbin/ifconfig lo:0 192.168.1.240 broadcast 192.168.1.240 netmask 0xffffffff up
+/sbin/route add -host 192.168.1.240 dev lo:0
+
+
+ceph -s or ceph status
+ceph osd stat  //检查ceph osd的状态
+ceph mon stat  //检查ceph mon的状态
+ceph mds stat  //检查MDS状态
+ceph -w  //观看集群正在发生的事件
+ceph df  //查看ceph存储空间
+
+
+for i in {1..10000};do echo ptest$i >>username.txt;done
+sed -i 's/$/\r/' username.txt  //转换成dos格式
+
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+
+route-eth0:
+ADDRESS0=192.168.1.0
+NETMASK0=255.255.255.0
+GATEWAY0=192.168.1.79
+ADDRESS1=172.16.0.0
+NETMASK1=255.255.0.0
+GATEWAY1=192.168.0.200
+
+
+
+
+loadrunner:
+double trans_time; 
+trans_time=lr_get_transaction_duration( "login" );  //lr_get_transaction_duration这个函数可以得到事务执行所消耗的时间
+
+    if (trans_time) //如果该事务消耗了时间输出该时间
+        lr_output_message("tr_login事务耗时 %f 秒", trans_time);
+    else //如果该事务没有消耗时间，那么输出时间不确定
+        lr_output_message("The duration cannot be determined.");
+
+
+    if (atoi(lr_eval_string("{login_Count}")) > 0)
+
+       { 
+       //如果在登陆后的页面中找到“ERROR”这个字符串，我们认为登陆失败
+      lr_error_message("Login failed");
+        }
+    else
+       {
+        //否则登陆成功
+     lr_output_message("Login successful."); 
+    return(0); 
+       }
+
+
+    if (status == 0) //如果成功
+     lr_end_transaction("login", LR_PASS);//如果提交成功，设置事务状态为PASS
+    else 
+     lr_end_transaction("login", LR_FAIL);//如果提交失败，设置事务状态为FAIL
+
+
+
+mysql：
+取得当天：
+SELECT curdate();
+mysql> SELECT curdate();
+
+取得前一天：
+mysql> select date_sub(curdate(),interval 1 day);
+
+
+
+linux文件分割与合并：
+split -d -b 10m jmeter.tar.bz2 jmeter
+cat jmeter* > jmeter.tar.bz2
+
+
+
+并发参数优化：
+vi /etc/sysctl.conf
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_tw_recycle = 1
+net.ipv4.tcp_timestamps = 1
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_keepalive_probes = 5  #TCP发送keepalive探测以确定该连接已经断开的次数
+net.ipv4.tcp_keepalive_intvl = 15  #探测消息发送的频率
+net.ipv4.tcp_max_syn_backlog = 8192  #表示SYN队列的长度
+net.ipv4.tcp_max_tw_buckets = 819200
+
+如果变更后运行命令netstat -s|grep timestamp
+发现packets rejects in established connections because of timestamp
+数值增加的很快，你可能得回滚这个变更了：说明使用snat访问你网站的人很多
+因为：虽然服务器端没有使用nat，但是客户端使用snat的情况很多，如果后发现packets rejects in established connections because of timestamp增长很快，建议将这个方案回滚。那时，可使用修改net.ipv4.tcp_max_tw_buckets（centos默认似乎是 262144）可调整至100000。其实也说明，timeout数量不大的时候，其实可以不用调整tcp_tw_recycle参数（风险很大）。
+
+
+
+
+如果在压力测试的时候,并发数增大,但无法完成测试,可以尝试调整下参数: 
+vi /etc/sysctl.conf 
+在kernel2.6之前的添加项： 
+net.ipv4.netfilter.ip_conntrack_max = 655360 
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_established = 180 
+ 
+kernel2.6之后的添加项： 
+net.nf_conntrack_max = 655360  # net.nf_conntrack_max = 655360 也可以 
+net.netfilter.nf_conntrack_tcp_timeout_established = 1200 
+
+
+
+firewall-cmd --zone=public --add-port=80/tcp --permanent
+
+
+
+xen server:
+xe vm-list
+xe pool-param-set uuid=... other-config:auto_poweron=true
+xe vm-param-set uuid=... other-config:auto_poweron=true
+
+
+jmeter关联，利用正则提取表达式：
+　　（1）引用名称：下一个请求要引用的参数名称，如填写title，则可用${title}引用它。
+
+　　（2）正则表达式（.+?)：
+
+　　　　()：括起来的部分就是要提取的。
+　　　　.：匹配任何字符串。
+　　　　+：一次或多次。
+　　　　?：不要太贪婪，在找到第一个匹配项后停止。
+
+　　（3）模板：用$$引用起来，如果在正则表达式中有多个正则表达式，则可以是$2$$3$等等，表示解析到的第几个值给title。如：$1$表示解析到的第1个值
+
+　　（4）匹配数字：0代表随机取值，1代表全部取值，通常情况下填0
+
+　　（5）缺省值：如果参数没有取得到值，那默认给一个值让它取。
+
+
+
+egrep '(vmx|svm)' /proc/cpuinfo
+
+cloudstack:
+/etc/cloudstack/management/db.properties
+cluster.node.IP:管理节点的IP地址
+db.cloud.username:数据库用户名
+db.cloud.password:加密的数据库密码
+db.cloud.host:数据库所在节点IP
+db.cloud.port:数据库端口
+日志：/var/log/cloudstack/management/management-server.log
+
+Expunge.delay ：设置删除的延时
+Expunge.interval ：设置删除的时间间隔
+Cpu.overprovisioning.factor ：设置CPU超分 
+
+
+
+添加路由：
+ip route add 10.15.150.0/24 via 192.168.150.253 dev enp0s3
+删除路由：
+ip route del 10.15.150.0/24
+
+1、添加永久静态路由
+
+ip route 指令对路由的修改不能保存，重启就没了。把 ip route 指令写到 /etc/rc.local 也是徒劳的。
+
+RHEL7官网文档没有提到 /etc/sysconfig/static-routes，经测试此文件已经无效；
+
+/etc/sysconfig/network 配置文件仅仅可以提供全局默认网关，语法同 Centos6 一样： GATEWAY=<ip address> ；
+
+永久静态路由需要写到 /etc/sysconfig/network-scripts/route-interface 文件中，比如添加两条静态路由：
+
+[root@centos7 ~]# vi /etc/sysconfig/network-scripts/route-eth0
+default via 192.168.1.79 dev eth0
+172.16.0.0/16 via 192.168.0.200 dev eth0
+
+
+在/etc/sysconfig/static-routes中添加路由
+
+如果你有多个网卡，并且有多个网关，就要通过这种方式设置路由，重启网卡设置就会生效。添加的内容和route命令相似：
+
+any host 192.168.1.11 gw 192.168.1.1
+any net 192.168.2.0/24 gw 192.168.1.8
+any net 192.168.3.0/24 gw 192.168.67.2
+
+
+一：使用 route 命令添加
+使用route 命令添加的路由，机器重启或者网卡重启后路由就失效了，方法：
+//添加到主机的路由
+# route add –host 192.168.1.11 dev eth0
+# route add –host 192.168.1.12 gw 192.168.1.1
+//添加到网络的路由
+# route add –net 192.168.1.11  netmask 255.255.255.0 eth0
+# route add –net 192.168.1.11  netmask 255.255.255.0 gw 192.168.1.1
+# route add –net 192.168.1.0/24 eth1
+//添加默认网关
+# route add default gw 192.168.2.1
+//删除路由
+# route del –host 192.168.1.11 dev eth0
+
+
+
+Iozone可以测试顺序和随机的文件io性能。在命令行上使用-o参数，可以使测试工作在SYNC模式上。命令输出结果中的rewrite指标可近似看做磁盘的IOPS值。
+./iozone -i 0 -i 1 -r 4K -s 1G -o -I -f /test
+参数说明
+-i 后面加数字，表示测试内容，范围从0到12，常用的有3项，0=写或者重写，1=读或者重读 ，2=随机读写，0选型是必须的。
+-r 测试块大小
+-s 测试文件大小
+-o 采用O_sync方式
+-f 测试文件路径
+-I 关闭文件系统缓存
+
+
+fio -ioengine=libaio -bs=512k -direct=1 -thread -rw=write -size=500G  -directory=/mnt -filename=fiotest -iodepth=1 -name=qatest -runtime=100
+fio -ioengine=libaio -bs=4k -direct=1 -thread -rw=randrw -rwmixread=70 -filename=/dev/sdb -iodepth=32  -name=qatest -ramp_time=300 -runtime=100 -group_reporting
+
+
+
+Vim查找替换及正则表达式的使用：
+简单替换表达式
+
+:[range]s/from/to/[flags]
+
+    range:搜索范围，如果没有指定范围，则作用于但前行。
+        :1,10s/from/to/ 表示在第1到第10行（包含第1，第10行）之间搜索替换；
+        :10s/from/to/ 表示只在第10行搜索替换；
+        :%s/from/to/ 表示在所有行中搜索替换；
+        1,$s/from/to/ 同上。
+
+    flags 有如下四个选项：
+        c confirm，每次替换前询问；
+        e error， 不显示错误；
+        g globle，不询问，整行替换。如果不加g选项，则只替换每行的第一个匹配到的字符串；
+        i ignore，忽略大小写。
+
+    这些选项可以合并使用，如cgi表示不区分大小写，整行替换，替换前询问。
+
+正则表达式
+
+    元字符
+
+        元字符
+        元字符	说明
+        . 	匹配任意字符
+        [abc] 	匹配方括号中的任意一个字符，可用-表示字符范围。如[a-z0-9]匹配小写字母和数字
+        [^abc] 	匹配除方括号中字符之外的任意字符
+        \d 	匹配阿拉伯数字，等同于[0-9]
+        \D 	匹配阿拉伯数字之外的任意字符，等同于[^0-9]
+        \x 	匹配十六进制数字，等同于[0-9A-Fa-f]
+        \X 	匹配十六进制数字之外的任意字符，等同于[^0-9A-Fa-f]
+        \l 	匹配[a-z]
+        \L 	匹配[^a-z]
+        \u 	匹配[A-Z]
+        \U 	匹配[^A-Z]
+        \w 	匹配单词字母，等同于[0-9A-Za-z_]
+        \W 	匹配单词字母之外的任意字符，等同于[^0-9A-Za-z_]
+        \t 	匹配<TAB>字符
+        \s 	匹配空白字符，等同于[\t]
+        \S 	匹配非空白字符，等同于[^\t]
+
+         
+
+        一些普通字符需转意
+        元字符	说明
+        \* 	匹配* 字符
+        \. 	匹配. 字符
+        \/ 	匹配 / 字符
+        \\	匹配 \ 字符
+        \[ 	匹配 [ 字符
+        \] 	匹配 ] 字符
+
+         
+
+        表示数量的元字符
+        元字符	说明
+        * 	匹配0-任意个
+        \+ 	匹配1-任意个
+        \? 	匹配0-1个
+        \{n,m} 	匹配n-m个
+        \{n} 	匹配n个
+        \{n,} 	匹配n-任意个
+        \{,m} 	匹配0-m个
+
+         
+
+        表示位置的元字符
+        元字符	说明
+        $ 	匹配行尾
+        ^ 	匹配行首
+        \< 	匹配单词词首
+        \> 	匹配单词词尾
+
+         
+
+    替换变量
+
+    在正则式中以\(和\)括起来的正则表达式，在后面使用的时候可以用\1、\2等变量来访问\(和\)中的内容。
+例子
+
+    删除行尾空格：:%s/\s\+$//g
+    删除行首多余空格：%s/^\s*//g 或者 %s/^ *//
+    删除沒有內容的空行 :g/^$/d
+    删除包含有空格组成的空行：%s/^\s*$// 或者 g/^\s*$/d
+    删除以空格或TAB开头到结尾的空行：%s/^[ |\t]*$// 或者 g/^[ |\t]*$/d
+
+    把文中的所有字符串“abc……xyz”替换为“xyz……abc”可以有下列写法
+
+    :%s/abc\(.*\)xyz/xyz\1abc/g
+    :%s/\(abc\)\(.*\)\(xyz\)/\3\2\1/g
+
+sed：指定文件进行替换
+
+sed -i "s/from/to/g" 文件名
+
+
+parted分区：
+mklabel gpt
+mkpart primary ext4 0% 100%
+mkpart ext4 1 -1
+mkpart ext4 2048s 100%
+
+
+
+
+shell：
+    # 取得数组元素的个数
+    length=${#array_name[@]}
+    # 或者
+    length=${#array_name[*]}
+    # 取得数组单个元素的长度
+    lengthn=${#array_name[n]}
+
+
+@和*表示数组元素
+
+[oracle@rhel6 zxx_shell]$ cat 1-array.sh
+
+#!/bin/bash
+
+clxx=([8]=wiscom0 [3]=0256656 [0]=wiscom8)
+
+echo "clxx[@]=${clxx[@]}"
+
+echo "----------------"
+
+echo "clxx[*]=${clxx[*]}"
+
+[oracle@rhel6 zxx_shell]$ ./1-array.sh 
+
+clxx[@]=wiscom8 0256656 wiscom0
+
+----------------
+
+clxx[*]=wiscom8 0256656 wiscom0
+
+@和*表示数组元素表示数组所有元素。
+
+[oracle@rhel6 zxx_shell]$ cat 1-array.sh
+
+#!/bin/bash
+
+clxx=([8]=wiscom0 [3]=0256656 [0]=wiscom8)
+
+for i in ${clxx[@]}
+
+do
+
+    echo $i
+
+done  
+
+[oracle@rhel6 zxx_shell]$ ./1-array.sh 
+
+wiscom8
+
+0256656
+
+wiscom0
+
+打印时只输出赋值的元素。
+
+
+@和*加引号打印区别
+
+注意：当使用引号时，@和*打印有区别，@是逐个打印每个元素，*是把数组作为一个整体打印
+
+[oracle@rhel6 zxx_shell]$ cat 1-array.sh
+
+#!/bin/bash
+
+clxx=([8]=wiscom0 [3]=0256656 [0]=wiscom8)
+
+for i in "${clxx[@]}"
+
+do
+
+    echo $i
+
+done  
+
+[oracle@rhel6 zxx_shell]$ ./1-array.sh 
+
+wiscom8
+
+0256656
+
+wiscom0
+
+[oracle@rhel6 zxx_shell]$ vi 1-array.sh 
+
+[oracle@rhel6 zxx_shell]$ cat 1-array.sh 
+
+#!/bin/bash
+
+clxx=([8]=wiscom0 [3]=0256656 [0]=wiscom8)
+
+for i in "${clxx[*]}"
+
+do
+
+    echo $i
+
+done  
+
+[oracle@rhel6 zxx_shell]$ ./1-array.sh 
+
+wiscom8 0256656 wiscom0
+
+
+
+
+
+
+iozone:
+bw:
+iozone -r 1m -s 5g -i 0 -i 1 -I -c -e
+
+iops:
+iozone -r 4k -s 5g -i 0 -i 2  -O -I -c -e
+
+
+
+
+wget下载指定目录下文件
+wget -r -np -k -P ~/tmp/ http://xxx.com/download/
+-P 表示下载到哪个目录
+-r 表示递归下载
+-np 表示不下载旁站连接.
+-k 表示将下载的网页里的链接修改为本地链接.
+-p 获得所有显示网页所需的元素
+-c 断点续传
+-nd 递归下载时不创建一层一层的目录，把所有的文件下载到当前目录
+
+wget/curl获取响应信息
+wget -d www.qq.com
+wget -S www.qq.com   
+
+curl -I www.qq.com
+
+
+
+
+nfs安装配置：
+yum -y install nfs-utils rpcbind
+
+nfs 的配置文件 /etc/expots
+
+vi /etc/exports
+/opt/test/ 192.168.1.0/24(rw,no_root_squash,no_all_squash,sync,anonuid=501,anongid=501)
+注：配置文件说明：
+
+/opt/test 为共享目录
+
+192.168.1.0/24  可以为一个网段，一个IP，也可以是域名，域名支持通配符 如: *.qq.com
+
+rw：read-write，可读写；
+
+ro：read-only，只读；
+
+sync：文件同时写入硬盘和内存；
+
+async：文件暂存于内存，而不是直接写入内存；
+
+no_root_squash：NFS客户端连接服务端时如果使用的是root的话，那么对服务端分享的目录来说，也拥有root权限。显然开启这项是不安全的。
+
+root_squash：NFS客户端连接服务端时如果使用的是root的话，那么对服务端分享的目录来说，拥有匿名用户权限，通常他将使用nobody或nfsnobody身份；
+
+all_squash：不论NFS客户端连接服务端时使用什么用户，对服务端分享的目录来说都是拥有匿名用户权限；
+
+anonuid：匿名用户的UID值，可以在此处自行设定。
+
+anongid：匿名用户的GID值。
+
+三、启动 nfs
+
+service rpcbind start
+
+service nfs start
+
+systemctl enable rpcbind
+systemctl enable nfs-server
+
+查看状态
+rpcinfo -p
+
+四、客户端挂载：
+
+showmount -e 192.168.1.97            #查看可挂载
+
+Export list for 192.168.1.97:
+
+/opt/test          192.168.1.0/24
+
+客户端挂载
+
+mount -t nfs 192.168.1.97:/opt/test /mnt
+
+无提示 既为成功
+
+客户端在挂载的时候遇到的一个问题如下，可能是网络不太稳定，NFS默认是用UDP协议，换成TCP协议即可：
+
+mount -t nfs 192.168.1.97:/opt/test /mnt -o proto=tcp -o nolock
+
+
+
+
+vconfig add eth0 22
+ifconfig eth0.22 192.168.22.176/24 up
+
+
+
+
+
+需启用ip转发
+
+ vi /etc/sysctl.conf
+
+net.ipv4.ip_forward = 1
+
+如果主机未启用防火墙，下面一条iptables语句就可设置nat内网共享上网：
+
+Code:
+
+iptables -t nat -A POSTROUTING -s 192.168.122.0/24 -o eth0 -j MASQUERADE
+
+iptables -t nat -A POSTROUTING -o enp1s0 -j MASQUERADE
+-s 表示源网络，即内网地址；-o 为连接因特网的接口
+
+
+
+如果主机上启用了防火墙，需加上下面两句：
+
+Code:
+
+iptables -A FORWARD -s 192.168.122.0/24 -o eth0 -j ACCEPT
+iptables -A FORWARD -d 192.168.122.0/24 -m state --state ESTABLISHED,RELATED -i eth0 -j ACCEPT
+
+分别表示：来自内网、出口为eth0的包接受转发；来自eth0、目标地址为内网，且连接状态为建立、相关的包接受转发.
+
+使用:
+
+Code:
+
+service iptables restart
+
+重启iptables服务,将内网计算机网关设置为CentOS的Ip地址即可
+
+
+
+
+
+iptables -F
+iptables -t nat -F
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -t nat -A POSTROUTING -s 192.168.0.170 -o enp1s0 -j MASQUERADE
+
+
+
+iptables -t nat -A POSTROUTING -s 192.168.1.170 -o eth0 -j MASQUERADE
+
+
+nc -vuz 183.62.15.114 4500    -v可视化，-u udp,-z扫描时不发送数据
+
+nc传送文件：
+接收机器上：nc -l 9999 >test.rar
+发送机器上：nc 192.168.1.170 9999 <test.rar
+
+
+nc传送文件夹：
+接收机器上：nc -l 9999 |tar xvf -
+发送机器上：tar cvf - * | nc 192.168.1.170 9999
+
+
+
+
+
+
+
+ iscsiadm用法简介
+
+已知192.168.14.112节点，存在目标器 iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzg，未设置CHAP，存在目标器 iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzgchap，设置CHAP用户名为mychap，CHAP密码为mypassword。
+
+1、发现：
+
+iscsiadm -m discovery -t st -p 192.168.14.112
+
+2、登陆：
+iscsiadm -m node -T iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzg -l（登陆某个目标器）
+
+iscsiadm -m node -L all（登陆发现的所有目标器）
+
+登入需验证码的节点，在登陆前需执行：
+
+（1）开启认证
+iscsiadm -m node -T  iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzgchap -o update --name node.session.auth.authmethod --value=CHAP
+（2）添加用户
+iscsiadm -m node -T  iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzgchap --op update --name node.session.auth.username --value=mychap
+（3）添加密码
+iscsiadm –m node –T  iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzgchap -–op update –name node.session.auth.password –value=mypassword
+
+3、格式化：
+
+mkfs.ext4 /dev/sdb (fdisk -l 查看设备)
+
+4、退出
+iscsiadm -m node -T iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzg -u（退出某个目标器）
+iscsiadm -m node -U all（退出所有登陆的目标器）
+
+连接死掉（断网或者target端断掉）时，使用如下指令：
+
+iscsiadm -m node -o delete –T  iqn.2015.06.cn.hrbyg.www.ygcs.c0a802b8:wzgchap -p 192.168.14.112
+
+5、查看session
+
+iscsiadm -m session （相当于iscsiadm -m session -P 0）
+
+iscsiadm -m session -P 3  (0-3均可，默认为0)
+
+6、设置开机自动登录
+
+sudo iscsiadm -m node -o update -n node.startup -v automatic （可与-T选项结合使用，manual为手动的）
+
+
+
+
+
+KVM与XEN虚拟化环境究竟有何不同:
+虚拟化的概念在近些年收到了很大程度上的普及，求其原因很简单：虚拟化能够最大程度利用资源，为企业节约成本。目前市面较受欢迎的虚拟架构主要有KVM、XEN和VMware，其中，KVM和XEN都是免费开源的，而VMware则是付费的.
+
+如果给KVM、XEN简单归类的话，KVM是完全虚拟化技术又叫硬件辅助虚拟化技术（Full Virtualization)。相反，XEN是半虚拟化技术（paravirtualization），也叫做准虚拟化技术。
+
+虚拟化技术通过在现有平台(机器)上添加一层薄的虚拟机监控程序(Virtual Machine Monitor，简称 VMM)软件而实现对系统的虚拟化，如虚拟处理器，虚拟内存管理器(MMU)和虚拟 I/O 系统等。虚拟机监控程序又被称之为监管程序(Hypervisor)。从应用程序的角度看，程序运行在虚拟机上同运行在其对应的实体计算机上一样。虚拟机技术使得一台物理计算机可以生成多个不同的虚拟机分别运行多个不同或相同的操作系统。虚拟机技术通过将不同的应用运行在不同的虚拟机上，可以避免不同应用程序之间的互相干扰，例如一个应用的崩溃不会影响到其它的应用等。这种由虚拟机技术实现的各个应用之间的完全隔离在服务器领域具有尤其重要的意义，同时虚拟机技术也可以使得企业、高校或研究所可以在不必购置大量物理计算机的情况下实现大规模的计算机网络以从事生产及研究，例如网络及网络应用研究，操作系统内核(Kernel)软件的开发和用户操作系统的开发等。
+
+根据是否需要修改客户机操作系统，虚拟化技术又可以分为(1)泛虚拟化(Paravirtualization)和(2)完全虚拟化(Full-virtualization)。完全虚拟化由于不需要修改客户机操作系统，因此具有很好的兼容性和同时支持异种操作系统或不同版本操作系统的能力。相反泛虚拟化技术则通常具有比完全虚拟化技术更好的性能。
+
+KVM最大的好处就在于它是与Linux内核集成的
+
+
+
+mkdir ~/docker-registry && cd $_
+
+
+
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+[root@localhost share]# ll /etc/localtime 
+lrwxrwxrwx. 1 root root 35 1月  24 2017 /etc/localtime -> ../usr/share/zoneinfo/Asia/Shanghai
+
+timedatectl set-timezone Asia/Shanghai
+
+[root@localhost share]# date -R
+Mon, 14 Aug 2017 17:27:35 +0800
+
+date -d @1361542596
+date -d @1361542596 +"%Y-%m-%d %H:%M:%S"  #时间戳转换为时间
+date -d @1361542596 +"%x-%X"
+
+
+
+
+
+
+
+在HTTP应用中，存在一个问题，SERVER由于某种原因关闭连接，如KEEPALIVE的超时，这样，作为主动关闭的SERVER一方就会进入 FIN_WAIT2状态，但TCP/IP协议栈有个问题，FIN_WAIT2状态是没有超时的（不象TIME_WAIT状态），所以如果CLIENT不关闭，这个FIN_WAIT_2状态将保持到系统重新启动，越来越多的FIN_WAIT_2状态会致使内核crash。 
+
+解决办法：修改/etc/sysctl.conf 文件：
+
+net.ipv4.tcp_syncookies = 1
+表示开启SYN Cookies。当出现SYN等待队列溢出时，启用cookies来处理，可防范少量SYN攻击，默认为0，表示关闭
+
+net.ipv4.tcp_fin_timeout = 30
+表示如果套接字由本端要求关闭，这个参数决定了它保持在FIN-WAIT-2状态的时间。
+
+net.ipv4.tcp_max_syn_backlog = 8192
+表示SYN队列的长度，默认为1024，加大队列长度为8192，可以容纳更多等待连接的网络连接数。
+
+net.ipv4.tcp_max_tw_buckets = 5000
+表示系统同时保持TIME_WAIT套接字的最大数量，如果超过这个数字，TIME_WAIT套接字将立刻被清除并打印警告信息。默认为180000，改为 5000。
+对于Apache、Nginx等服务器，上几行的参数可以很好地减少TIME_WAIT套接字数量，但是对于Squid，效果却不大。此项参数可以控制TIME_WAIT套接字的最大数量，避免Squid服务器被大量的TIME_WAIT套接字拖死。
