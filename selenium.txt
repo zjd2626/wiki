@@ -1,3 +1,9 @@
+mirrors:
+	http://npm.taobao.org/mirrors/selenium
+	http://npm.taobao.org/mirrors/geckodriver
+	http://npm.taobao.org/mirrors/chromedriver
+
+
 css定位：
 用#表示id
 用.表示class
