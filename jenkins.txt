@@ -1,0 +1,40 @@
+1、ssh登陆远程，提示Host key verification failed.
+su
+su -s /bin/bash jenkins
+ssh-copy-id -i username@ip
+
+
+jenkins jobs:
+	ssh clouder@192.168.0.53 'bash -x -s /home/clouder/deploy.sh' 
+
+deploy.sh：
+
+#!/bin/bash
+
+export JAVA_HOME=/usr/java/jdk1.8.0_162
+
+tomcat_pid=`/usr/sbin/lsof -n -P -t -i :8080`
+[ -n "$tomcat_pid" ] && kill -9 $tomcat_pid
+
+wget http://192.168.1.170:8088/job/cidemo/ws/target/org.tinygroup.studytiny.war -O /home/clouder/apache-tomcat-8.5.13/webapps/study.war
+rm -rf /home/clouder/apache-tomcat-8.5.13/webapps/study
+cd /home/clouder/apache-tomcat-8.5.13/bin
+./startup.sh
+
+
+
+2、maven
+clean install -Dmaven.test.skip=true
+
+3、增加节点agent
+系统管理——》管理节点——》新建节点，填入相关信息
+然后点击节点——》状态,按里面的提示安装服务
+
+
+4、解决jenkins运行selenium测试出错的问题
+If you run Jenkins as a service in the background it won't open apps in the foreground. You may either try to run it not as a service in the foreground, or run it as a Local System account and check Allow the service to interact with desktop option. In the latter case you may get into permission problems, though.
+
+
+1、进入服务，把jenkinsslave-d__jenkins服务，允许服务与桌面交互打上勾，确定并重启该服务
+
+2、进入服务，停止Interactive Services Detection并设置为禁用
