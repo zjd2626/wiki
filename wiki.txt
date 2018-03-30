@@ -1319,3 +1319,7 @@ net.ipv4.tcp_max_tw_buckets = 5000
 
 txt文件乱码：
 使用命令iconv对文件内容编码进行转换：iconv -f gbk -tutf8 pos.txt > pos.txt.utf8
+
+比较本地文件与远程文件的差异：
+ssh username@host "cat remote_file" |diff local_file -
+
