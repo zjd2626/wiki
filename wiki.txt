@@ -1473,3 +1473,45 @@ nginx默认request的header的那么中包含’_’时，会自动忽略掉。
 解决方法是：在nginx里的nginx.conf配置文件中的http部分中添加如下配置： 
 underscores_in_headers on; （默认 underscores_in_headers 为off）
 ----------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+问题：nginx配置websocket支持
+WebSocket协议为创建客户端和服务器端需要实时双向通讯的webapp提供了一个选择。其为HTML5的一部分，WebSocket相较于原来开发这类app的方法来说，其能使开发更加地简单。大部分现在的浏览器都支持WebSocket，比如Firefox，IE，Chrome，Safari，Opera，并且越来越多的服务器框架现在也同样支持WebSocket。
+
+在实际的生产环境中，要求多个WebSocket服务器必须具有高性能和高可用，那么WebSocket协议就需要一个负载均衡层，NGINX从1.3开始支持WebSocket，其可以作为一个反向代理和为WebSocket程序做负载均衡。
+
+WebSocket协议不同于HTTP协议，但是WebSocket握手是通过HTTP来完成的，使用HTTP的Upgrade设施来升级连接从HTTP到WebSocket。这个允许WebSocket程序能够更简单地融入现有的基础设施。比如，WebSocket程序可以使用80和443标准的HTTP端口，从而允许使用存在的防火墙策略。
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+
+#设定负载均衡的服务器列表
+upstream mysvr {
+    hash $remote_addr consistent;
+    #weigth参数表示权值，权值越高被分配到的几率越大
+    server 192.168.105.27:8100  weight=1 max_fails=3 fail_timeout=30;
+    server 192.168.105.44:8100  weight=1 max_fails=3 fail_timeout=30;
+}
+
+server {
+     listen 8100;
+     server_name mysvr:8100;
+     location / {
+        proxy_pass http://mysvr;
+
+        proxy_redirect off;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host:$server_port;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+     }
+}
+----------------------------------------------------------------------
