@@ -100,7 +100,8 @@ lsnrctl status
 
 
 mysql绿色安装：
-下载tar.gz包，运行script中的安装脚本：./mysql_install_db --basedir=/home/clouder/soft/mysql/mysql-5.5.10-linux2.6-x86_64 --datadir=/home/clouder/soft/mysql/mysql-5.5.10-linux2.6-x86_64/data --skip-name-resolve --user=clouder
+下载tar.gz包，export TMPDIR=/tmp;export MYSQL_UNIX_PORT=/tmp/mysql.sock
+运行script中的安装脚本：./mysql_install_db --basedir=/home/clouder/soft/mysql/mysql-5.5.10-linux2.6-x86_64 --datadir=/home/clouder/soft/mysql/mysql-5.5.10-linux2.6-x86_64/data --skip-name-resolve --user=clouder
 
 在mysql bin目录中编写startmysql脚本：
 #!/bin/bash
@@ -113,6 +114,8 @@ shutdownmysql脚本：
 SCRIPT_PATH=`dirname "$0"`
 SCRIPT_PATH=`cd ${SCRIPT_PATH};pwd`
 $SCRIPT_PATH/mysqladmin -uroot -p shutdown
+
+
 
 
 http://li.nux.ro/download/nux/dextop
@@ -1745,3 +1748,25 @@ apt-get install  ubuntu-mate-core  ubuntu-mate-desktop xrdp
 service xrdp restart
 
 然后客户端就可以通过rdesktop远程连接了。
+
+
+-------------------------------------------------------------------
+apache允许列目录
+
+vi /etc/httpd/conf.d/welcom.conf
+
+<LocationMatch "^/+$">
+    #Options -Indexes  #注释掉这一行
+
+ 
+
+vi /etc/httpd/conf/httpd.conf
+
+<Directory "/var/www/html">
+    Options Indexes FollowSymLinks    #添加这一行
+    Require all granted
+</Directory>
+
+service httpd restart
+
+---------------------------------------------------------------------
