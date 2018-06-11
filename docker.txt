@@ -13,12 +13,28 @@ systemctl restart docker
 
 2、docker version / docker info :查看基本信息，遇到使用问题或者BUG，可以到社区里报告，记得带着这些信息哈。
 
-3、docker pull hub.cloudak47.com:5000/jenkins :拉取镜像。
+3、docker search iredmail：检索名为iredmail的镜像
+   docker images ：查看已下载的镜像
+
+   docker pull hub.cloudak47.com:5000/jenkins :拉取镜像。
 
 4、docker run 从镜像创建一个容器并运行指定的命令常用参数-i -d，建议用—-name命名这个容器，命名后可以使用容器名访问这个容器。
 例如：docker run --name myweb -d -p 8081:8080  ubuntu:web 
 
-5、docker exec -it Container /bin/bash 连接到容器上运行bash
+在容器中安装新的程序(wget命令)
+$docker run learn/tutorial apt-get install -y wget
+
+使用docker ps -l命令获得安装完wget命令之后容器的id。然后把这个镜像保存为learn/wget。
+$ docker ps -l
+Container ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+1861c071d861 learn/tutorial “apt-get install -y w” 2 minutes ago Exited (0) 2 minutes ago furious_panini
+
+保存对容器的修改
+$ docker commit 1861c071d861 learn/wget
+ad2245a8acd8014c39ad46b503cc8e74ce4202d9b4b4fdf48596b596b88059b4
+执行完docker commit命令之后，返回新版本镜像的id号
+
+5、docker exec -it [容器名称|id] /bin/bash 连接到容器上运行bash
 例如：docker exec -it myweb /bin/bash 
 
 6、docker logs CONTAINER 查看日志，如run命令后的运行结果，Docker logs -f 查看实时的日志。
@@ -28,5 +44,4 @@ systemctl restart docker
 
 8、docker rm CONTAINER 删除一个容器，记得要先停止正在运行的容器，再去删除它。
 
-
-
+9、检查运行中的镜像：docker inspect 2e079c9eacac4
