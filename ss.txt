@@ -1,0 +1,10 @@
+https://www.58003.net/
+https://github.com/shadowsocks/shadowsocks-windows/releases
+https://dream.ren/down
+https://github.com/max2max/freess
+
+
+    "server":"185.247.62.30",
+    "server_port":11269,
+    "password":"12345678",
+    "method":"aes-256-cfb",
